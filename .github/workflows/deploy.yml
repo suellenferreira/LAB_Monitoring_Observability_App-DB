@@ -62,7 +62,7 @@ jobs:
 
       - name: Load deploy config
         run: |
-          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
           # Apply workflow_dispatch overrides (if manual trigger)
           echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
           echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
@@ -123,7 +123,7 @@ jobs:
 
       - name: Load deploy config
         run: |
-          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
           echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
           echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
           echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
@@ -178,7 +178,7 @@ jobs:
 
       - name: Load deploy config
         run: |
-          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
           echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
           echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
           echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV

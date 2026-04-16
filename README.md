@@ -105,7 +105,7 @@ Go to **GitHub repo > Settings > Secrets and variables > Actions > New repositor
 
 ### Step 3 — Customize Deployment Parameters
 
-All tunable infrastructure values are centralized in **`deploy-config.env`** (resource group name, region, SKUs, networking, retention, etc.). Edit this single file to customize your deployment — no need to touch the workflow.
+All tunable infrastructure values are centralized in **`deploy-config.cfg`** (resource group name, region, SKUs, networking, retention, etc.). Edit this single file to customize your deployment — no need to touch the workflow.
 
 For secrets and identity values, use GitHub Secrets (Step 2).
 
@@ -198,7 +198,7 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── sql-database.bicep      # Azure SQL Server + Database + diagnostics (Entra ID / SQL auth)
 │   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR
 │   └── front-door.bicep        # Azure Front Door + diagnostics
-├── deploy-config.env           # ← Single file for all tunable deployment parameters
+├── deploy-config.cfg           # ← Single file for all tunable deployment parameters
 ├── main.bicep                  # Main orchestration template
 ├── main.bicepparam             # Bicep parameters file (for local CLI deployments)
 ├── topology.mmd                # Mermaid topology diagram
