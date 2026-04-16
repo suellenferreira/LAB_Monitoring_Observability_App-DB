@@ -42,12 +42,22 @@ param environment string = 'dev'
 @description('SKU for the App Service Plan.')
 param appServicePlanSku string = 'S1'
 
-@description('Administrator login for Azure SQL Database (PaaS).')
-param sqlAdminLogin string
+@description('Administrator login for Azure SQL Database (PaaS). Required only when sqlAuthMode is "sqlAndEntra".')
+param sqlAdminLogin string = ''
 
 @secure()
-@description('Administrator password for Azure SQL Database (PaaS).')
-param sqlAdminPassword string
+@description('Administrator password for Azure SQL Database (PaaS). Required only when sqlAuthMode is "sqlAndEntra".')
+param sqlAdminPassword string = ''
+
+@description('SQL authentication mode: "entraOnly" (Entra ID only, corporate-policy compliant) or "sqlAndEntra" (both SQL login and Entra ID).')
+@allowed(['entraOnly', 'sqlAndEntra'])
+param sqlAuthMode string = 'entraOnly'
+
+@description('Entra ID admin object ID (user or group) for Azure SQL. Required for Entra ID authentication.')
+param sqlEntraAdminObjectId string = ''
+
+@description('Entra ID admin login name (e.g. user@domain.com or group name) for Azure SQL.')
+param sqlEntraAdminLogin string = ''
 
 @description('Administrator login for the SQL Server VM (IaaS).')
 param vmAdminUsername string
@@ -184,8 +194,11 @@ module sqlDatabase 'modules/sql-database.bicep' = {
     location: location
     serverName: 'sql-${nameSuffix}'
     databaseName: 'sqldb-${nameSuffix}'
+    authMode: sqlAuthMode
     adminLogin: sqlAdminLogin
     adminPassword: sqlAdminPassword
+    entraAdminObjectId: sqlEntraAdminObjectId
+    entraAdminLogin: sqlEntraAdminLogin
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     skuName: sqlDatabaseSkuName
     skuTier: sqlDatabaseSkuTier

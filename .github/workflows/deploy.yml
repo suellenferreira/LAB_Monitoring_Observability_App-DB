@@ -46,12 +46,11 @@ permissions:
   contents: read
 
 env:
-  AZURE_SUBSCRIPTION_ID: '8279ba69-db06-40a9-befd-e4a1eb2b1f96'
-  AZURE_TENANT_ID: '16b3c013-d300-468d-ac64-7eda0820b6d3'
-  RESOURCE_GROUP: ${{ github.event.inputs.resourceGroupName || 'rg-lab-monitoring-observability' }}
-  LOCATION: ${{ github.event.inputs.location || 'centralus' }}
-  PROJECT_PREFIX: ${{ github.event.inputs.projectPrefix || 'labmonitor' }}
-  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+  # ── Azure Identity (from secrets — cannot be externalized) ──
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
   validate:
@@ -60,6 +59,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Load deploy config
+        run: |
+          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          # Apply workflow_dispatch overrides (if manual trigger)
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -82,19 +90,26 @@ jobs:
             projectPrefix=${{ env.PROJECT_PREFIX }}
             environment=${{ env.ENVIRONMENT }}
             location=${{ env.LOCATION }}
+            sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
+            sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
+            sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
-            frontendLinuxFxVersion=NODE|20-lts
-            backendLinuxFxVersion=DOTNETCORE|8.0
-            sqlDatabaseSkuName=S0
-            sqlDatabaseSkuTier=Standard
-            vmImageOffer=sql2022-ws2022
-            vmImageSku=sqldev-gen2
-            osDiskStorageType=StandardSSD_LRS
-            vnetAddressPrefix=10.0.0.0/16
-            subnetAddressPrefix=10.0.1.0/24
+            appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
+            frontendLinuxFxVersion=${{ env.FRONTEND_RUNTIME }}
+            backendLinuxFxVersion=${{ env.BACKEND_RUNTIME }}
+            sqlDatabaseSkuName=${{ env.SQL_DATABASE_SKU_NAME }}
+            sqlDatabaseSkuTier=${{ env.SQL_DATABASE_SKU_TIER }}
+            vmSize=${{ env.VM_SIZE }}
+            vmImageOffer=${{ env.VM_IMAGE_OFFER }}
+            vmImageSku=${{ env.VM_IMAGE_SKU }}
+            osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
+            vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
+            subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
+            appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
           deploymentMode: Validate
 
   what-if:
@@ -105,6 +120,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Load deploy config
+        run: |
+          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -121,19 +144,26 @@ jobs:
             projectPrefix=${{ env.PROJECT_PREFIX }}
             environment=${{ env.ENVIRONMENT }}
             location=${{ env.LOCATION }}
+            sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
+            sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
+            sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
-            frontendLinuxFxVersion=NODE|20-lts
-            backendLinuxFxVersion=DOTNETCORE|8.0
-            sqlDatabaseSkuName=S0
-            sqlDatabaseSkuTier=Standard
-            vmImageOffer=sql2022-ws2022
-            vmImageSku=sqldev-gen2
-            osDiskStorageType=StandardSSD_LRS
-            vnetAddressPrefix=10.0.0.0/16
-            subnetAddressPrefix=10.0.1.0/24
+            appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
+            frontendLinuxFxVersion=${{ env.FRONTEND_RUNTIME }}
+            backendLinuxFxVersion=${{ env.BACKEND_RUNTIME }}
+            sqlDatabaseSkuName=${{ env.SQL_DATABASE_SKU_NAME }}
+            sqlDatabaseSkuTier=${{ env.SQL_DATABASE_SKU_TIER }}
+            vmSize=${{ env.VM_SIZE }}
+            vmImageOffer=${{ env.VM_IMAGE_OFFER }}
+            vmImageSku=${{ env.VM_IMAGE_SKU }}
+            osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
+            vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
+            subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
+            appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
           additionalArguments: --what-if
 
   deploy:
@@ -145,6 +175,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Load deploy config
+        run: |
+          grep -v '^\s*#' deploy-config.env | grep -v '^\s*$' >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -188,20 +226,24 @@ jobs:
           echo "  Project Prefix  : ${{ env.PROJECT_PREFIX }}"
           echo "  Environment     : ${{ env.ENVIRONMENT }}"
           echo "  ----------------------------------------"
-          echo "  App Plan SKU    : S1"
-          echo "  Frontend Stack  : NODE|20-lts"
-          echo "  Backend Stack   : DOTNETCORE|8.0"
+          echo "  App Plan SKU    : ${{ env.APP_SERVICE_PLAN_SKU }}"
+          echo "  Frontend Stack  : ${{ env.FRONTEND_RUNTIME }}"
+          echo "  Backend Stack   : ${{ env.BACKEND_RUNTIME }}"
           echo "  ----------------------------------------"
+          echo "  SQL Auth Mode   : ${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}"
           echo "  SQL Admin Login : ${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}"
-          echo "  SQL DB SKU      : S0 (Standard)"
+          echo "  SQL DB SKU      : ${{ env.SQL_DATABASE_SKU_NAME }} (${{ env.SQL_DATABASE_SKU_TIER }})"
           echo "  ----------------------------------------"
           echo "  VM Admin User   : ${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}"
-          echo "  VM Size         : Standard_D2s_v5"
-          echo "  VM Image        : sql2022-ws2022 / sqldev-gen2"
-          echo "  OS Disk Type    : StandardSSD_LRS"
+          echo "  VM Size         : ${{ env.VM_SIZE }}"
+          echo "  VM Image        : ${{ env.VM_IMAGE_OFFER }} / ${{ env.VM_IMAGE_SKU }}"
+          echo "  OS Disk Type    : ${{ env.OS_DISK_STORAGE_TYPE }}"
           echo "  ----------------------------------------"
-          echo "  VNet CIDR       : 10.0.0.0/16"
-          echo "  Subnet CIDR     : 10.0.1.0/24"
+          echo "  VNet CIDR       : ${{ env.VNET_ADDRESS_PREFIX }}"
+          echo "  Subnet CIDR     : ${{ env.SUBNET_ADDRESS_PREFIX }}"
+          echo "  ----------------------------------------"
+          echo "  Log Retention   : ${{ env.LOG_RETENTION_DAYS }} days"
+          echo "  AppIns Retention: ${{ env.APP_INSIGHTS_RETENTION_DAYS }} days"
           echo "========================================"
 
       - name: Deploy Bicep template
@@ -214,18 +256,25 @@ jobs:
             projectPrefix=${{ env.PROJECT_PREFIX }}
             environment=${{ env.ENVIRONMENT }}
             location=${{ env.LOCATION }}
+            sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
+            sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
+            sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
-            frontendLinuxFxVersion=NODE|20-lts
-            backendLinuxFxVersion=DOTNETCORE|8.0
-            sqlDatabaseSkuName=S0
-            sqlDatabaseSkuTier=Standard
-            vmImageOffer=sql2022-ws2022
-            vmImageSku=sqldev-gen2
-            osDiskStorageType=StandardSSD_LRS
-            vnetAddressPrefix=10.0.0.0/16
-            subnetAddressPrefix=10.0.1.0/24
+            appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
+            frontendLinuxFxVersion=${{ env.FRONTEND_RUNTIME }}
+            backendLinuxFxVersion=${{ env.BACKEND_RUNTIME }}
+            sqlDatabaseSkuName=${{ env.SQL_DATABASE_SKU_NAME }}
+            sqlDatabaseSkuTier=${{ env.SQL_DATABASE_SKU_TIER }}
+            vmSize=${{ env.VM_SIZE }}
+            vmImageOffer=${{ env.VM_IMAGE_OFFER }}
+            vmImageSku=${{ env.VM_IMAGE_SKU }}
+            osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
+            vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
+            subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
+            appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false

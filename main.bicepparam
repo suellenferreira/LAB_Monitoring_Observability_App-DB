@@ -17,6 +17,11 @@ param backendLinuxFxVersion = 'DOTNETCORE|8.0'
 // ===========================================================================
 // SQL Database (PaaS) Settings
 // ===========================================================================
+// authMode: 'entraOnly' = Entra ID only (corporate-policy compliant, no SQL password needed)
+//           'sqlAndEntra' = Both SQL login + Entra ID (requires SQL_ADMIN_LOGIN/PASSWORD)
+param sqlAuthMode = 'entraOnly'
+param sqlEntraAdminObjectId = readEnvironmentVariable('SQL_ENTRA_ADMIN_OBJECT_ID', '')
+param sqlEntraAdminLogin = readEnvironmentVariable('SQL_ENTRA_ADMIN_LOGIN', '')
 param sqlAdminLogin = readEnvironmentVariable('SQL_ADMIN_LOGIN', 'sqladminuser')
 param sqlAdminPassword = readEnvironmentVariable('SQL_ADMIN_PASSWORD', '')
 param sqlDatabaseSkuName = 'S0'
@@ -41,5 +46,5 @@ param subnetAddressPrefix = '10.100.1.0/24'
 // ===========================================================================
 // Observability Settings
 // ===========================================================================
-param logRetentionDays = 60
+param logRetentionDays = 90
 param appInsightsRetentionDays = 90

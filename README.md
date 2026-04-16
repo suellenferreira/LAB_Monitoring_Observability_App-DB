@@ -88,21 +88,37 @@ Go to **GitHub repo > Settings > Secrets and variables > Actions > New repositor
 | Secret | Description | Required |
 |--------|-------------|----------|
 | `AZURE_CREDENTIALS` | The full JSON output from `az ad sp create-for-rbac` | **Yes** |
-| `SQL_ADMIN_PASSWORD` | Password for Azure SQL PaaS admin (min 8 chars, 3/4 categories) | **Yes** |
+| `AZURE_SUBSCRIPTION_ID` | Your Azure subscription ID | **Yes** |
+| `AZURE_TENANT_ID` | Your Entra ID (Azure AD) tenant ID | **Yes** |
 | `VM_ADMIN_PASSWORD` | Password for the SQL VM admin (min 12 chars, 3/4 categories) | **Yes** |
+| `SQL_ENTRA_ADMIN_OBJECT_ID` | Entra ID object ID of the SQL admin user or group | **Yes** (if `entraOnly`) |
+| `SQL_ENTRA_ADMIN_LOGIN` | Entra ID UPN or group name for SQL admin | **Yes** (if `entraOnly`) |
+| `SQL_ADMIN_PASSWORD` | Password for Azure SQL PaaS admin (min 8 chars, 3/4 categories) | Only if `sqlAndEntra` |
+| `SQL_AUTH_MODE` | `entraOnly` (default) or `sqlAndEntra` | No |
 | `SQL_ADMIN_LOGIN` | Custom SQL admin username (default: `sqladminuser`) | No |
 | `VM_ADMIN_USERNAME` | Custom VM admin username (default: `vmadminuser`) | No |
 
-> **Note:** The Tenant ID and Subscription ID in the workflow file should be updated to match your environment if you fork this project.
+> To find your Entra ID object ID and UPN, run:
+> ```bash
+> az ad signed-in-user show --query "{objectId:id, upn:userPrincipalName}" -o table
+> ```
 
-### Step 3 — Update the Workflow (if forking)
+### Step 3 — Customize Deployment Parameters
 
-Edit `.github/workflows/deploy.yml` and update these env vars with your own values:
-```yaml
-env:
-  AZURE_SUBSCRIPTION_ID: '<YOUR_SUBSCRIPTION_ID>'
-  AZURE_TENANT_ID: '<YOUR_TENANT_ID>'
-```
+All tunable infrastructure values are centralized in **`deploy-config.env`** (resource group name, region, SKUs, networking, retention, etc.). Edit this single file to customize your deployment — no need to touch the workflow.
+
+For secrets and identity values, use GitHub Secrets (Step 2).
+
+## Azure SQL Server Authentication
+
+The SQL module supports **two authentication modes**, configurable via the `SQL_AUTH_MODE` secret:
+
+| Mode | Secret Value | Description |
+|------|-------------|-------------|
+| **Entra ID Only** (default) | `entraOnly` | Uses Microsoft Entra ID exclusively. No SQL username/password. Compliant with corporate policies (e.g., MCAPS). Requires `SQL_ENTRA_ADMIN_OBJECT_ID` and `SQL_ENTRA_ADMIN_LOGIN` secrets. |
+| **SQL + Entra ID** | `sqlAndEntra` | Hybrid mode with both SQL authentication and Entra ID admin. Requires `SQL_ADMIN_PASSWORD` (and optionally `SQL_ADMIN_LOGIN`) in addition to the Entra secrets. |
+
+> **Tip:** If your tenant enforces Entra-only authentication via Azure Policy, use `entraOnly` (the default). Set `sqlAndEntra` only in environments that explicitly allow SQL authentication.
 
 ## Deployment Options
 
@@ -136,30 +152,29 @@ az login --tenant <YOUR_TENANT_ID>
 az account set --subscription <YOUR_SUBSCRIPTION_ID>
 
 # Create resource group
-az group create --name rg-lab-monitoring-observability --location eastus2
+az group create --name rg-lab-monitoring-observability --location centralus
 
 # Set credentials as environment variables
-export SQL_ADMIN_PASSWORD='YourStr0ngP@ssword!'
+export SQL_ENTRA_ADMIN_OBJECT_ID='<YOUR_ENTRA_OBJECT_ID>'
+export SQL_ENTRA_ADMIN_LOGIN='<YOUR_ENTRA_UPN>'
 export VM_ADMIN_PASSWORD='An0therStr0ngP@ss!'
 
-# Deploy using the parameters file
+# Deploy using the parameters file (uses entraOnly mode by default)
 az deployment group create \
   --resource-group rg-lab-monitoring-observability \
   --template-file main.bicep \
   --parameters main.bicepparam
 
-# Or deploy passing parameters inline
+# Or deploy with sqlAndEntra mode (SQL + Entra ID authentication)
+export SQL_ADMIN_PASSWORD='YourStr0ngP@ssword!'
 az deployment group create \
   --resource-group rg-lab-monitoring-observability \
   --template-file main.bicep \
-  --parameters \
-    sqlAdminLogin=sqladminuser \
-    sqlAdminPassword='YourStr0ngP@ssword!' \
-    vmAdminUsername=vmadminuser \
-    vmAdminPassword='An0therStr0ngP@ss!'
+  --parameters main.bicepparam \
+  --parameters sqlAuthMode=sqlAndEntra
 ```
 
-> **PowerShell users:** Use `$env:SQL_ADMIN_PASSWORD = '...'` instead of `export`.
+> **PowerShell users:** Use `$env:VM_ADMIN_PASSWORD = '...'` instead of `export`.
 
 ## Cleanup
 
@@ -180,11 +195,14 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── app-service-plan.bicep  # Shared App Service Plan
 │   ├── app-service-frontend.bicep  # Frontend App Service + diagnostics
 │   ├── app-service-backend.bicep   # Backend API App Service + diagnostics
-│   ├── sql-database.bicep      # Azure SQL Server + Database + diagnostics
+│   ├── sql-database.bicep      # Azure SQL Server + Database + diagnostics (Entra ID / SQL auth)
 │   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR
 │   └── front-door.bicep        # Azure Front Door + diagnostics
+├── deploy-config.env           # ← Single file for all tunable deployment parameters
 ├── main.bicep                  # Main orchestration template
-├── main.bicepparam             # Bicep parameters file
+├── main.bicepparam             # Bicep parameters file (for local CLI deployments)
+├── topology.mmd                # Mermaid topology diagram
+├── TOPOLOGY.txt                # Plain-text topology description
 └── README.md
 ```
 

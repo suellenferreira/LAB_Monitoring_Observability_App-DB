@@ -17,12 +17,22 @@ param serverName string
 @description('Name of the SQL Database.')
 param databaseName string
 
-@description('SQL administrator login.')
-param adminLogin string
+@description('SQL authentication mode: "entraOnly" (Entra ID only, no SQL login) or "sqlAndEntra" (both SQL login and Entra ID).')
+@allowed(['entraOnly', 'sqlAndEntra'])
+param authMode string = 'entraOnly'
+
+@description('SQL administrator login. Required only when authMode is "sqlAndEntra".')
+param adminLogin string = ''
 
 @secure()
-@description('SQL administrator password.')
-param adminPassword string
+@description('SQL administrator password. Required only when authMode is "sqlAndEntra".')
+param adminPassword string = ''
+
+@description('Entra ID admin object ID (user or group). Required for Entra ID authentication.')
+param entraAdminObjectId string = ''
+
+@description('Entra ID admin login name (e.g. user@domain.com or group name).')
+param entraAdminLogin string = ''
 
 @description('Resource ID of the Log Analytics workspace.')
 param logAnalyticsWorkspaceId string
@@ -39,7 +49,26 @@ param collation string = 'SQL_Latin1_General_CP1_CI_AS'
 @description('SQL Database maximum size in bytes (default 2 GB).')
 param maxSizeBytes int = 2147483648
 
-resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
+// --- Entra ID Only: No SQL admin login, Entra-only authentication ---
+resource sqlServerEntraOnly 'Microsoft.Sql/servers@2023-08-01-preview' = if (authMode == 'entraOnly') {
+  name: serverName
+  location: location
+  properties: {
+    minimalTlsVersion: '1.2'
+    publicNetworkAccess: 'Enabled'
+    administrators: {
+      administratorType: 'ActiveDirectory'
+      principalType: 'Group'
+      login: entraAdminLogin
+      sid: entraAdminObjectId
+      tenantId: tenant().tenantId
+      azureADOnlyAuthentication: true
+    }
+  }
+}
+
+// --- SQL + Entra ID: SQL admin login with Entra ID also configured ---
+resource sqlServerSqlAndEntra 'Microsoft.Sql/servers@2023-08-01-preview' = if (authMode == 'sqlAndEntra') {
   name: serverName
   location: location
   properties: {
@@ -47,12 +76,33 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
     administratorLoginPassword: adminPassword
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
+    administrators: {
+      administratorType: 'ActiveDirectory'
+      principalType: 'Group'
+      login: entraAdminLogin
+      sid: entraAdminObjectId
+      tenantId: tenant().tenantId
+      azureADOnlyAuthentication: false
+    }
   }
 }
 
+// Reference the correct server based on auth mode
+var sqlServerId = authMode == 'entraOnly' ? sqlServerEntraOnly.id : sqlServerSqlAndEntra.id
+var sqlServerRef = authMode == 'entraOnly' ? sqlServerEntraOnly.name : sqlServerSqlAndEntra.name
+
 // Auditing: captures all database operations for compliance and security
-resource sqlAudit 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = {
-  parent: sqlServer
+resource sqlAuditEntraOnly 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = if (authMode == 'entraOnly') {
+  parent: sqlServerEntraOnly
+  name: 'default'
+  properties: {
+    state: 'Enabled'
+    isAzureMonitorTargetEnabled: true
+  }
+}
+
+resource sqlAuditSqlAndEntra 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = if (authMode == 'sqlAndEntra') {
+  parent: sqlServerSqlAndEntra
   name: 'default'
   properties: {
     state: 'Enabled'
@@ -61,8 +111,8 @@ resource sqlAudit 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = 
 }
 
 // Allow Azure services to access the SQL Server (for demo purposes)
-resource firewallAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = {
-  parent: sqlServer
+resource firewallEntraOnly 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = if (authMode == 'entraOnly') {
+  parent: sqlServerEntraOnly
   name: 'AllowAzureServices'
   properties: {
     startIpAddress: '0.0.0.0'
@@ -70,8 +120,32 @@ resource firewallAllowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01-prev
   }
 }
 
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
-  parent: sqlServer
+resource firewallSqlAndEntra 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = if (authMode == 'sqlAndEntra') {
+  parent: sqlServerSqlAndEntra
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+resource sqlDatabaseEntraOnly 'Microsoft.Sql/servers/databases@2023-08-01-preview' = if (authMode == 'entraOnly') {
+  parent: sqlServerEntraOnly
+  name: databaseName
+  location: location
+  sku: {
+    name: skuName
+    tier: skuTier
+  }
+  properties: {
+    collation: collation
+    maxSizeBytes: maxSizeBytes
+    zoneRedundant: false
+  }
+}
+
+resource sqlDatabaseSqlAndEntra 'Microsoft.Sql/servers/databases@2023-08-01-preview' = if (authMode == 'sqlAndEntra') {
+  parent: sqlServerSqlAndEntra
   name: databaseName
   location: location
   sku: {
@@ -86,9 +160,9 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
 }
 
 // Diagnostic settings on the database: query stats, errors, timeouts, deadlocks
-resource sqlDbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource sqlDbDiagnosticsEntraOnly 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (authMode == 'entraOnly') {
   name: 'send-to-law'
-  scope: sqlDatabase
+  scope: sqlDatabaseEntraOnly
   properties: {
     workspaceId: logAnalyticsWorkspaceId
     logs: [
@@ -146,28 +220,66 @@ resource sqlDbDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-prev
   }
 }
 
-// Diagnostic settings on the master database for server-level auditing
-resource masterDb 'Microsoft.Sql/servers/databases@2023-08-01-preview' existing = {
-  parent: sqlServer
-  name: 'master'
-}
-
-resource masterDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+// Diagnostic settings for sqlAndEntra mode
+resource sqlDbDiagnosticsSqlAndEntra 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (authMode == 'sqlAndEntra') {
   name: 'send-to-law'
-  scope: masterDb
+  scope: sqlDatabaseSqlAndEntra
   properties: {
     workspaceId: logAnalyticsWorkspaceId
     logs: [
-      {
-        category: 'SQLSecurityAuditEvents'
-        enabled: true
-      }
+      { category: 'SQLInsights', enabled: true }
+      { category: 'AutomaticTuning', enabled: true }
+      { category: 'QueryStoreRuntimeStatistics', enabled: true }
+      { category: 'QueryStoreWaitStatistics', enabled: true }
+      { category: 'Errors', enabled: true }
+      { category: 'DatabaseWaitStatistics', enabled: true }
+      { category: 'Timeouts', enabled: true }
+      { category: 'Blocks', enabled: true }
+      { category: 'Deadlocks', enabled: true }
+    ]
+    metrics: [
+      { category: 'Basic', enabled: true }
+      { category: 'InstanceAndAppAdvanced', enabled: true }
+      { category: 'WorkloadManagement', enabled: true }
+    ]
+  }
+}
+
+// Diagnostic settings on the master database for server-level auditing
+resource masterDbEntraOnly 'Microsoft.Sql/servers/databases@2023-08-01-preview' existing = if (authMode == 'entraOnly') {
+  parent: sqlServerEntraOnly
+  name: 'master'
+}
+
+resource masterDbSqlAndEntra 'Microsoft.Sql/servers/databases@2023-08-01-preview' existing = if (authMode == 'sqlAndEntra') {
+  parent: sqlServerSqlAndEntra
+  name: 'master'
+}
+
+resource masterDiagnosticsEntraOnly 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (authMode == 'entraOnly') {
+  name: 'send-to-law'
+  scope: masterDbEntraOnly
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      { category: 'SQLSecurityAuditEvents', enabled: true }
+    ]
+  }
+}
+
+resource masterDiagnosticsSqlAndEntra 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (authMode == 'sqlAndEntra') {
+  name: 'send-to-law'
+  scope: masterDbSqlAndEntra
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      { category: 'SQLSecurityAuditEvents', enabled: true }
     ]
   }
 }
 
 @description('SQL Server FQDN.')
-output sqlServerFqdn string = sqlServer.properties.fullyQualifiedDomainName
+output sqlServerFqdn string = authMode == 'entraOnly' ? sqlServerEntraOnly.properties.fullyQualifiedDomainName : sqlServerSqlAndEntra.properties.fullyQualifiedDomainName
 
 @description('SQL Database name.')
-output sqlDatabaseName string = sqlDatabase.name
+output sqlDatabaseName string = databaseName
