@@ -188,6 +188,7 @@ resource amaExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
 resource dcr 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
   name: 'dcr-${vmName}'
   location: location
+  kind: 'Windows'
   properties: {
     dataSources: {
       // Windows performance counters: CPU, memory, disk, SQL Server metrics
