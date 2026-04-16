@@ -111,10 +111,10 @@ param subnetAddressPrefix string = '10.100.1.0/24'
 var nameSuffix = '${projectPrefix}-${environment}'
 var sqlServerName = 'sql-${nameSuffix}'
 var sqlDatabaseDbName = 'sqldb-${nameSuffix}'
-// Connection string using Entra ID (Managed Identity) when entraOnly, or SQL auth otherwise
+// PaaS connection string: Entra ID (Managed Identity) when entraOnly, SQL auth otherwise
 var sqlConnectionString = sqlAuthMode == 'entraOnly' 
   ? 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};Authentication=Active Directory Default;TrustServerCertificate=True;'
-  : 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};User ID=${sqlAdminLogin};Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
+  : 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};User ID=${sqlAdminLogin};Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=True;'
 
 // ============================================================================
 // MODULE: Log Analytics Workspace
@@ -189,6 +189,7 @@ module backendApp 'modules/app-service-backend.bicep' = {
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     linuxFxVersion: backendLinuxFxVersion
     sqlConnectionString: sqlConnectionString
+    sqlVmConnectionString: 'Server=tcp:${sqlVm.outputs.publicIpAddress},1433;Database=AdventureWorks2022;User ID=${vmAdminUsername};Password=${vmAdminPassword};Encrypt=True;TrustServerCertificate=True;'
   }
 }
 

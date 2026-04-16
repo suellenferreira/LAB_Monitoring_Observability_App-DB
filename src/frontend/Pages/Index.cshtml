@@ -7,17 +7,19 @@
 <div class="row mb-4">
     <div class="col-12">
         <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
-        <p class="text-muted">AdventureWorksLT — Azure Monitoring &amp; Observability Lab</p>
+        <p class="text-muted">Azure Monitoring &amp; Observability Lab — PaaS &amp; IaaS Databases</p>
     </div>
 </div>
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
     <div class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle"></i> <strong>Backend API Error:</strong> @Model.ErrorMessage
-        <br /><small class="text-muted">Ensure the backend API is deployed and the connection string is configured.</small>
+        <i class="bi bi-exclamation-triangle"></i> <strong>Azure SQL (PaaS) Error:</strong> @Model.ErrorMessage
+        <br /><small class="text-muted">Ensure the backend API is deployed and the SQL connection string is configured.</small>
     </div>
 }
+
+<h5 class="mb-3"><i class="bi bi-cloud"></i> Azure SQL Database (PaaS) — AdventureWorksLT</h5>
 
 <div class="row g-4 mb-4">
     <div class="col-md-3">
@@ -118,6 +120,75 @@
             </div>
             <div class="card-footer text-end">
                 <a asp-page="/Orders" class="btn btn-sm btn-outline-primary">View All Orders &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4" />
+
+<h5 class="mb-3"><i class="bi bi-hdd-rack"></i> SQL Server on VM (IaaS) — AdventureWorks2022</h5>
+
+@if (!string.IsNullOrEmpty(Model.VmErrorMessage))
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> <strong>SQL VM Error:</strong> @Model.VmErrorMessage
+        <br /><small class="text-muted">The SQL VM may still be provisioning or the connection is not yet available.</small>
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card card-stat text-white bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title opacity-75">Employees</h6>
+                        <h2 class="mb-0">@Model.EmployeeCount</h2>
+                    </div>
+                    <i class="bi bi-person-badge fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-stat text-white bg-secondary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title opacity-75">Departments</h6>
+                        <h2 class="mb-0">@Model.DepartmentCount</h2>
+                    </div>
+                    <i class="bi bi-building fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-person-badge"></i> Recent Employees (SQL VM)</div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>Name</th><th>Job Title</th><th>Department</th><th>Hire Date</th></tr></thead>
+                    <tbody>
+                        @foreach (var e in Model.RecentEmployees)
+                        {
+                            <tr>
+                                <td>@e.FirstName @e.LastName</td>
+                                <td>@e.JobTitle</td>
+                                <td><span class="badge bg-info text-dark">@e.Department</span></td>
+                                <td>@e.HireDate.ToString("yyyy-MM-dd")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer text-end">
+                <a asp-page="/Employees" class="btn btn-sm btn-outline-warning">View All Employees &rarr;</a>
+                <a asp-page="/Departments" class="btn btn-sm btn-outline-secondary ms-2">View Departments &rarr;</a>
             </div>
         </div>
     </div>

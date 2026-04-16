@@ -90,6 +90,19 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
           destinationAddressPrefix: '*'
         }
       }
+      {
+        name: 'AllowSQL'
+        properties: {
+          priority: 1100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '1433'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+        }
+      }
     ]
   }
 }
@@ -170,7 +183,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-// SQL Virtual Machine resource — enables SQL IaaS Agent
+// SQL Virtual Machine resource — enables SQL IaaS Agent and Mixed Mode auth
 resource sqlVm 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2023-10-01' = {
   name: vmName
   location: location
@@ -178,6 +191,14 @@ resource sqlVm 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2023-10-01' = {
     virtualMachineResourceId: vm.id
     sqlManagement: 'Full'
     sqlServerLicenseType: 'PAYG'
+    serverConfigurationsManagementSettings: {
+      sqlConnectivityUpdateSettings: {
+        connectivityType: 'PUBLIC'
+        port: 1433
+        sqlAuthUpdateUserName: adminUsername
+        sqlAuthUpdatePassword: adminPassword
+      }
+    }
   }
 }
 
@@ -287,3 +308,6 @@ output vmName string = vm.name
 
 @description('Virtual machine resource ID.')
 output vmId string = vm.id
+
+@description('Public IP address of the SQL VM.')
+output publicIpAddress string = publicIp.properties.ipAddress

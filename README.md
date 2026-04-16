@@ -199,18 +199,20 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR
 │   └── front-door.bicep        # Azure Front Door + diagnostics
 ├── src/
-│   ├── backend/                # ASP.NET Core 8 Web API (AdventureWorksLT)
+│   ├── backend/                # ASP.NET Core 8 Web API (PaaS + IaaS)
 │   │   ├── BackendApi.csproj
-│   │   ├── Program.cs          # Minimal API: /api/products, /api/customers, /api/orders, /api/categories
+│   │   ├── Program.cs          # Minimal API: /api/* (PaaS) + /api/vm/* (IaaS)
 │   │   └── appsettings.json
 │   └── frontend/               # ASP.NET Core 8 Razor Pages dashboard
 │       ├── FrontendApp.csproj
 │       ├── Program.cs
 │       ├── Pages/
-│       │   ├── Index.cshtml    # Dashboard with summary cards + recent data
-│       │   ├── Products.cshtml # Product catalog table
-│       │   ├── Customers.cshtml # Customer directory
-│       │   └── Orders.cshtml   # Sales order history
+│       │   ├── Index.cshtml    # Dashboard — PaaS + IaaS summary cards + tables
+│       │   ├── Products.cshtml # Product catalog (PaaS — AdventureWorksLT)
+│       │   ├── Customers.cshtml # Customer directory (PaaS)
+│       │   ├── Orders.cshtml   # Sales order history (PaaS)
+│       │   ├── Employees.cshtml # Employee directory (IaaS — AdventureWorks2022)
+│       │   └── Departments.cshtml # Department listing (IaaS)
 │       └── wwwroot/css/site.css
 ├── deploy-config.cfg           # ← Single file for all tunable deployment parameters
 ├── main.bicep                  # Main orchestration template
@@ -222,11 +224,29 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 
 ## Demo Applications
 
-The lab includes two working .NET 8 applications that query the **AdventureWorksLT** sample database:
+The lab includes two working .NET 8 applications that query **both** the Azure SQL PaaS and SQL VM IaaS databases:
+
+### Application Data Flow
+
+```
+Frontend (Razor Pages)
+    │
+    ▼ HTTP calls
+Backend API (.NET 8 Minimal API)
+    │
+    ├──► Azure SQL PaaS (AdventureWorksLT)       ← ConnectionStrings__DefaultConnection
+    │    /api/products, /api/customers,              SQL auth (User ID + Password)
+    │    /api/orders, /api/categories
+    │
+    └──► SQL Server VM (AdventureWorks2022)       ← ConnectionStrings__SqlVmConnection
+         /api/vm/employees, /api/vm/departments      SQL auth via VM public IP:1433
+```
 
 ### Backend API (`src/backend/`)
 
-Minimal ASP.NET Core Web API with the following endpoints:
+Minimal ASP.NET Core Web API with endpoints for both databases:
+
+**Azure SQL PaaS (AdventureWorksLT)**
 
 | Endpoint | Description |
 |----------|-------------|
@@ -236,14 +256,24 @@ Minimal ASP.NET Core Web API with the following endpoints:
 | `GET /api/customers` | Top 50 customers from `SalesLT.Customer` |
 | `GET /api/orders` | Top 50 sales orders from `SalesLT.SalesOrderHeader` |
 
+**SQL Server VM — IaaS (AdventureWorks2022)**
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/vm/health` | VM SQL health check |
+| `GET /api/vm/employees` | Top 50 employees from `HumanResources.Employee` + `Person.Person` |
+| `GET /api/vm/departments` | All departments with employee counts from `HumanResources.Department` |
+
 ### Frontend App (`src/frontend/`)
 
 ASP.NET Core Razor Pages dashboard with Bootstrap 5 UI:
 
-- **Dashboard** — Summary cards (product/customer/order/category counts) and recent data tables
-- **Products** — Full product catalog with pricing, colors, and sizes
-- **Customers** — Customer directory with email and company info
-- **Orders** — Sales order history with status badges and totals
+- **Dashboard** — Summary cards and recent data from both PaaS and IaaS databases
+- **Products** — Full product catalog with pricing, colors, and sizes (PaaS)
+- **Customers** — Customer directory with email and company info (PaaS)
+- **Orders** — Sales order history with status badges and totals (PaaS)
+- **Employees** — Employee directory with job titles and departments (IaaS)
+- **Departments** — Department listing with employee counts (IaaS)
 
 ### Sample Data
 

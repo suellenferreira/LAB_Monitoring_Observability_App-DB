@@ -1,3 +1,7 @@
+// Dashboard page model — fetches data from BOTH databases via Backend API:
+//   PaaS endpoints:  /api/products, /api/customers, /api/orders, /api/categories
+//   IaaS endpoints:  /api/vm/employees, /api/vm/departments
+
 using System.Net.Http;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,6 +13,7 @@ public class IndexModel : PageModel
     private readonly IHttpClientFactory _http;
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
+    // PaaS (AdventureWorksLT)
     public int ProductCount { get; set; }
     public int CustomerCount { get; set; }
     public int OrderCount { get; set; }
@@ -17,11 +22,19 @@ public class IndexModel : PageModel
     public List<OrderDto> RecentOrders { get; set; } = new();
     public string? ErrorMessage { get; set; }
 
+    // IaaS (AdventureWorks2022 on SQL VM)
+    public int EmployeeCount { get; set; }
+    public int DepartmentCount { get; set; }
+    public List<EmployeeDto> RecentEmployees { get; set; } = new();
+    public string? VmErrorMessage { get; set; }
+
     public IndexModel(IHttpClientFactory http) => _http = http;
 
     public async Task OnGetAsync()
     {
         var client = _http.CreateClient("BackendApi");
+
+        // Fetch PaaS data
         try
         {
             var products = await FetchAsync<List<ProductDto>>(client, "/api/products") ?? new();
@@ -39,6 +52,21 @@ public class IndexModel : PageModel
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+
+        // Fetch IaaS (SQL VM) data
+        try
+        {
+            var employees = await FetchAsync<List<EmployeeDto>>(client, "/api/vm/employees") ?? new();
+            var departments = await FetchAsync<List<DepartmentDto>>(client, "/api/vm/departments") ?? new();
+
+            EmployeeCount = employees.Count;
+            DepartmentCount = departments.Count;
+            RecentEmployees = employees.Take(5).ToList();
+        }
+        catch (Exception ex)
+        {
+            VmErrorMessage = ex.Message;
         }
     }
 

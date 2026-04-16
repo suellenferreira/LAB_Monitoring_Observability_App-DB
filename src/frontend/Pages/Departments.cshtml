@@ -1,0 +1,38 @@
+@page
+@model DepartmentsModel
+@{
+    ViewData["Title"] = "Departments (SQL VM)";
+}
+
+<h2><i class="bi bi-building"></i> Departments <span class="badge bg-secondary">SQL VM (IaaS)</span></h2>
+<p class="text-muted">AdventureWorks2022 department data from SQL Server on Azure VM</p>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Department</th>
+                <th>Group</th>
+                <th class="text-end">Employees</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.Departments)
+            {
+                <tr>
+                    <td>@d.DepartmentId</td>
+                    <td><strong>@d.Name</strong></td>
+                    <td>@d.GroupName</td>
+                    <td class="text-end"><span class="badge bg-primary">@d.EmployeeCount</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted"><small>Showing @Model.Departments.Count departments from SQL VM</small></p>

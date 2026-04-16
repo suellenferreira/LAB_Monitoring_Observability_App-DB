@@ -32,6 +32,9 @@ param linuxFxVersion string = 'DOTNETCORE|8.0'
 @description('SQL connection string for the backend API.')
 param sqlConnectionString string = ''
 
+@description('SQL VM connection string for the IaaS database.')
+param sqlVmConnectionString string = ''
+
 resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
   name: appName
   location: location
@@ -65,6 +68,10 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'ConnectionStrings__DefaultConnection'
           value: sqlConnectionString
+        }
+        {
+          name: 'ConnectionStrings__SqlVmConnection'
+          value: sqlVmConnectionString
         }
       ]
     }
