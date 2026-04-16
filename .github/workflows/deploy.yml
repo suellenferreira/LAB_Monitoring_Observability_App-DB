@@ -15,7 +15,7 @@ on:
       location:
         description: 'Azure region to deploy'
         required: true
-        default: 'eastus2'
+        default: 'centralus'
         type: choice
         options:
           - eastus
@@ -49,7 +49,7 @@ env:
   AZURE_SUBSCRIPTION_ID: '8279ba69-db06-40a9-befd-e4a1eb2b1f96'
   AZURE_TENANT_ID: '16b3c013-d300-468d-ac64-7eda0820b6d3'
   RESOURCE_GROUP: ${{ github.event.inputs.resourceGroupName || 'rg-lab-monitoring-observability' }}
-  LOCATION: ${{ github.event.inputs.location || 'eastus2' }}
+  LOCATION: ${{ github.event.inputs.location || 'centralus' }}
   PROJECT_PREFIX: ${{ github.event.inputs.projectPrefix || 'labmonitor' }}
   ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
 

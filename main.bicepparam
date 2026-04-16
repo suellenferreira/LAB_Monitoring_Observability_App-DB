@@ -3,7 +3,7 @@ using 'main.bicep'
 // ===========================================================================
 // General Settings
 // ===========================================================================
-param location = 'eastus2'
+param location = 'centralus'
 param projectPrefix = 'labmonitor'
 param environment = 'dev'
 
