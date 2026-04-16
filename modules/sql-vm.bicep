@@ -195,6 +195,7 @@ resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@202
     type: 'CustomScriptExtension'
     typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
+    settings: {}
     protectedSettings: {
       commandToExecute: 'powershell -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\\SQLBackups -ItemType Directory -Force; $ProgressPreference = \'SilentlyContinue\'; Invoke-WebRequest -Uri \'https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak\' -OutFile \'C:\\SQLBackups\\AdventureWorks2022.bak\'; Invoke-Sqlcmd -Username \'${adminUsername}\' -Password \'${adminPassword}\' -Query \\"RESTORE DATABASE [AdventureWorks2022] FROM DISK = N\'C:\\SQLBackups\\AdventureWorks2022.bak\' WITH MOVE \'AdventureWorks2022\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022.mdf\', MOVE \'AdventureWorks2022_log\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022_log.ldf\', REPLACE\\" -ServerInstance \'localhost\'"'
     }
