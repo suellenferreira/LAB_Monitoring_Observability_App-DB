@@ -61,13 +61,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Load deploy config
+        run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
+
+      - name: Apply overrides
         run: |
-          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
-          # Apply workflow_dispatch overrides (if manual trigger)
-          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
-          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
-          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -122,12 +123,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Load deploy config
+        run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
+
+      - name: Apply overrides
         run: |
-          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
-          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
-          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
-          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -177,12 +180,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Load deploy config
+        run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
+
+      - name: Apply overrides
         run: |
-          grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
-          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT || 'rg-lab-monitoring-observability' }}" >> $GITHUB_ENV
-          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT || 'centralus' }}" >> $GITHUB_ENV
-          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT || 'labmonitor' }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT || 'dev' }}" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=${{ github.event.inputs.resourceGroupName || env.RESOURCE_GROUP_DEFAULT }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT }}" >> $GITHUB_ENV
+          echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
