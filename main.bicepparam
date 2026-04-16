@@ -1,0 +1,45 @@
+using 'main.bicep'
+
+// ===========================================================================
+// General Settings
+// ===========================================================================
+param location = 'eastus2'
+param projectPrefix = 'labmonitor'
+param environment = 'dev'
+
+// ===========================================================================
+// App Service Settings
+// ===========================================================================
+param appServicePlanSku = 'S1'
+param frontendLinuxFxVersion = 'NODE|20-lts'
+param backendLinuxFxVersion = 'DOTNETCORE|8.0'
+
+// ===========================================================================
+// SQL Database (PaaS) Settings
+// ===========================================================================
+param sqlAdminLogin = readEnvironmentVariable('SQL_ADMIN_LOGIN', 'sqladminuser')
+param sqlAdminPassword = readEnvironmentVariable('SQL_ADMIN_PASSWORD', '')
+param sqlDatabaseSkuName = 'S0'
+param sqlDatabaseSkuTier = 'Standard'
+
+// ===========================================================================
+// SQL VM (IaaS) Settings
+// ===========================================================================
+param vmAdminUsername = readEnvironmentVariable('VM_ADMIN_USERNAME', 'vmadminuser')
+param vmAdminPassword = readEnvironmentVariable('VM_ADMIN_PASSWORD', '')
+param vmSize = 'Standard_D2s_v5'
+param vmImageOffer = 'sql2022-ws2022'
+param vmImageSku = 'sqldev-gen2'
+param osDiskStorageType = 'StandardSSD_LRS'
+
+// ===========================================================================
+// Networking
+// ===========================================================================
+param vnetAddressPrefix = '10.100.0.0/16'
+param subnetAddressPrefix = '10.100.1.0/24'
+
+// ===========================================================================
+// Observability Settings
+// ===========================================================================
+param logRetentionDays = 60
+param appInsightsRetentionDays = 90

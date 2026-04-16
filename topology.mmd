@@ -1,0 +1,72 @@
+%% LAB Monitoring & Observability - Resource Topology & Dependencies
+%% Solid arrows (-->) = traffic/data flow
+%% Bold arrows (==>) = telemetry/observability data flow
+%% Dashed arrows (-.->) = hosting/configuration relationships
+
+flowchart TB
+    subgraph EDGE["Edge Layer"]
+        AFD["Azure Front Door\n(afd-labmonitor-dev)"]
+    end
+
+    subgraph APP["Application Layer"]
+        ASP["App Service Plan\n(asp-labmonitor-dev)"]
+        FE["App Service - Frontend\n(app-frontend-labmonitor-dev)\nNODE|20-lts"]
+        BE["App Service - Backend API\n(app-backend-labmonitor-dev)\nDOTNETCORE|8.0"]
+    end
+
+    subgraph DBPAAS["Database Layer - PaaS"]
+        SQLS["Azure SQL Server\n(sql-labmonitor-dev)"]
+        SQLDB["Azure SQL Database\n(sqldb-labmonitor-dev)\nS0 Standard"]
+    end
+
+    subgraph DBIAAS["Database Layer - IaaS"]
+        VNET["VNet\n(vnet-labmonitor-dev)\n10.0.0.0/16"]
+        SUBNET["Subnet snet-sql\n10.0.1.0/24"]
+        NSG["NSG\n(nsg-vm-sql-dev)"]
+        NIC["NIC + Public IP"]
+        VM["Azure VM + SQL Server\n(vm-sql-dev)\nStandard_D2s_v5"]
+        AMA["Azure Monitor Agent\nExtension"]
+        DCR["Data Collection Rule\n(dcr-vm-sql-dev)"]
+    end
+
+    subgraph OBS["Observability Layer"]
+        LAW["Log Analytics Workspace\n(law-labmonitor-dev)"]
+        APPI["Application Insights\n(appi-labmonitor-dev)\nWorkspace-based"]
+    end
+
+    %% Edge to App routing
+    AFD -->|"/* routes"| FE
+    AFD -->|"/api/* routes"| BE
+
+    %% App Service hosting
+    ASP -.->|hosts| FE
+    ASP -.->|hosts| BE
+
+    %% Backend to SQL dependency
+    BE -->|"SQL dependency\ncalls"| SQLDB
+
+    %% SQL hierarchy
+    SQLS -->|parent| SQLDB
+
+    %% VM networking chain
+    VNET --> SUBNET
+    NSG -.->|attached| SUBNET
+    SUBNET --> NIC
+    NIC --> VM
+    AMA -.->|extension| VM
+    DCR -.->|association| VM
+
+    %% Telemetry flows to Application Insights
+    FE ==>|"telemetry\n(connection string)"| APPI
+    BE ==>|"telemetry\n(connection string)"| APPI
+
+    %% Application Insights backed by Log Analytics
+    APPI ==>|"workspace-based\ningestion"| LAW
+
+    %% Diagnostic settings to Log Analytics
+    FE -.->|"diag settings\nHTTP/app/platform logs"| LAW
+    BE -.->|"diag settings\nHTTP/app/platform logs"| LAW
+    SQLDB -.->|"diag settings\nquery stats, deadlocks"| LAW
+    SQLS -.->|"audit logs\nmaster DB"| LAW
+    AFD -.->|"diag settings\naccess/health/WAF logs"| LAW
+    DCR ==>|"perf counters\nevent logs"| LAW

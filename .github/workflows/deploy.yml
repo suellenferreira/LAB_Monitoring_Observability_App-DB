@@ -1,0 +1,225 @@
+name: Deploy Azure Monitoring & Observability Lab
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      resourceGroupName:
+        description: 'Resource Group name'
+        required: true
+        default: 'rg-lab-monitoring-observability'
+        type: string
+      location:
+        description: 'Azure region to deploy'
+        required: true
+        default: 'eastus2'
+        type: choice
+        options:
+          - eastus
+          - eastus2
+          - westus2
+          - westus3
+          - centralus
+          - northeurope
+          - westeurope
+          - southeastasia
+          - brazilsouth
+      projectPrefix:
+        description: 'Project prefix for resource naming (3-10 chars)'
+        required: true
+        default: 'labmonitor'
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+
+env:
+  AZURE_SUBSCRIPTION_ID: '8279ba69-db06-40a9-befd-e4a1eb2b1f96'
+  AZURE_TENANT_ID: '16b3c013-d300-468d-ac64-7eda0820b6d3'
+  RESOURCE_GROUP: ${{ github.event.inputs.resourceGroupName || 'rg-lab-monitoring-observability' }}
+  LOCATION: ${{ github.event.inputs.location || 'eastus2' }}
+  PROJECT_PREFIX: ${{ github.event.inputs.projectPrefix || 'labmonitor' }}
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  validate:
+    name: Validate Bicep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Validate Bicep template
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: main.bicep
+          parameters: >
+            projectPrefix=${{ env.PROJECT_PREFIX }}
+            environment=${{ env.ENVIRONMENT }}
+            location=${{ env.LOCATION }}
+            sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
+            vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
+            frontendLinuxFxVersion=NODE|20-lts
+            backendLinuxFxVersion=DOTNETCORE|8.0
+            sqlDatabaseSkuName=S0
+            sqlDatabaseSkuTier=Standard
+            vmImageOffer=sql2022-ws2022
+            vmImageSku=sqldev-gen2
+            osDiskStorageType=StandardSSD_LRS
+            vnetAddressPrefix=10.0.0.0/16
+            subnetAddressPrefix=10.0.1.0/24
+          deploymentMode: Validate
+
+  what-if:
+    name: What-If Analysis
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run What-If
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: main.bicep
+          parameters: >
+            projectPrefix=${{ env.PROJECT_PREFIX }}
+            environment=${{ env.ENVIRONMENT }}
+            location=${{ env.LOCATION }}
+            sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
+            vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
+            frontendLinuxFxVersion=NODE|20-lts
+            backendLinuxFxVersion=DOTNETCORE|8.0
+            sqlDatabaseSkuName=S0
+            sqlDatabaseSkuTier=Standard
+            vmImageOffer=sql2022-ws2022
+            vmImageSku=sqldev-gen2
+            osDiskStorageType=StandardSSD_LRS
+            vnetAddressPrefix=10.0.0.0/16
+            subnetAddressPrefix=10.0.1.0/24
+          additionalArguments: --what-if
+
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.RESOURCE_GROUP }} \
+            --location ${{ env.LOCATION }}
+
+      - name: Display deployment parameters (informative)
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║                        DISCLAIMER                        ║"
+          echo "╠════════════════════════════════════════════════════════════╣"
+          echo "║ This deployment is for EDUCATIONAL/DEMO purposes only.   ║"
+          echo "║ Azure resources WILL INCUR COSTS on your subscription.   ║"
+          echo "║                                                          ║"
+          echo "║ YOU are responsible for:                                 ║"
+          echo "║  - Reviewing parameters and configurations               ║"
+          echo "║  - Monitoring and managing costs                         ║"
+          echo "║  - Securing all credentials                              ║"
+          echo "║  - Deleting resources when no longer needed              ║"
+          echo "║                                                          ║"
+          echo "║ The authors assume NO liability for charges, data loss,  ║"
+          echo "║ or security incidents from the use of this template.     ║"
+          echo "║                                                          ║"
+          echo "║ Tear down:  az group delete --name ${{ env.RESOURCE_GROUP }} --yes  ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "========================================"
+          echo "  Deployment Parameters Summary"
+          echo "========================================"
+          echo "  Subscription ID : ${{ env.AZURE_SUBSCRIPTION_ID }}"
+          echo "  Tenant ID       : ${{ env.AZURE_TENANT_ID }}"
+          echo "  Resource Group  : ${{ env.RESOURCE_GROUP }}"
+          echo "  Location        : ${{ env.LOCATION }}"
+          echo "  Project Prefix  : ${{ env.PROJECT_PREFIX }}"
+          echo "  Environment     : ${{ env.ENVIRONMENT }}"
+          echo "  ----------------------------------------"
+          echo "  App Plan SKU    : S1"
+          echo "  Frontend Stack  : NODE|20-lts"
+          echo "  Backend Stack   : DOTNETCORE|8.0"
+          echo "  ----------------------------------------"
+          echo "  SQL Admin Login : ${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}"
+          echo "  SQL DB SKU      : S0 (Standard)"
+          echo "  ----------------------------------------"
+          echo "  VM Admin User   : ${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}"
+          echo "  VM Size         : Standard_D2s_v5"
+          echo "  VM Image        : sql2022-ws2022 / sqldev-gen2"
+          echo "  OS Disk Type    : StandardSSD_LRS"
+          echo "  ----------------------------------------"
+          echo "  VNet CIDR       : 10.0.0.0/16"
+          echo "  Subnet CIDR     : 10.0.1.0/24"
+          echo "========================================"
+
+      - name: Deploy Bicep template
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: main.bicep
+          parameters: >
+            projectPrefix=${{ env.PROJECT_PREFIX }}
+            environment=${{ env.ENVIRONMENT }}
+            location=${{ env.LOCATION }}
+            sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
+            vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
+            frontendLinuxFxVersion=NODE|20-lts
+            backendLinuxFxVersion=DOTNETCORE|8.0
+            sqlDatabaseSkuName=S0
+            sqlDatabaseSkuTier=Standard
+            vmImageOffer=sql2022-ws2022
+            vmImageSku=sqldev-gen2
+            osDiskStorageType=StandardSSD_LRS
+            vnetAddressPrefix=10.0.0.0/16
+            subnetAddressPrefix=10.0.1.0/24
+          deploymentName: lab-monitoring-${{ github.run_number }}
+          failOnStdErr: false

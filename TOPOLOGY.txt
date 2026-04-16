@@ -1,0 +1,104 @@
+================================================================================
+ LAB Monitoring & Observability - Resource Topology & Dependencies
+================================================================================
+
+LINE LEGEND
+  Solid arrows  (-->)   = Traffic / data flow
+  Bold arrows   (==>)   = Telemetry / observability data flow
+  Dashed arrows (-.->)  = Hosting / configuration relationships
+
+
+EDGE LAYER
+  Azure Front Door (afd-labmonitor-dev)
+    --> /* routes        --> App Service Frontend
+    --> /api/* routes    --> App Service Backend API
+    -.-> diag settings (access logs, health probe logs, WAF logs) --> Log Analytics
+
+
+APPLICATION LAYER
+  App Service Plan (asp-labmonitor-dev)
+    -.-> hosts --> App Service Frontend
+    -.-> hosts --> App Service Backend API
+
+  App Service - Frontend (app-frontend-labmonitor-dev) [NODE|20-lts]
+    ==> telemetry (connection string) --> Application Insights
+    -.-> diag settings (HTTP logs, app logs, platform logs) --> Log Analytics
+
+  App Service - Backend API (app-backend-labmonitor-dev) [DOTNETCORE|8.0]
+    ==> telemetry (connection string) --> Application Insights
+    --> SQL dependency calls --> Azure SQL Database
+    -.-> diag settings (HTTP logs, app logs, platform logs) --> Log Analytics
+
+
+DATABASE LAYER - PaaS
+  Azure SQL Server (sql-labmonitor-dev)
+    --> parent --> Azure SQL Database (sqldb-labmonitor-dev) [S0 Standard]
+    -.-> audit logs (master DB) --> Log Analytics
+
+  Azure SQL Database
+    -.-> diag settings (query stats, deadlocks, timeouts, errors) --> Log Analytics
+
+
+DATABASE LAYER - IaaS
+  VNet (vnet-labmonitor-dev) [10.0.0.0/16]
+    --> Subnet snet-sql [10.0.1.0/24]
+        -.-> NSG (nsg-vm-sql-dev) attached
+        --> NIC + Public IP
+            --> Azure VM + SQL Server (vm-sql-dev) [Standard_D2s_v5]
+                -.-> Azure Monitor Agent Extension
+                -.-> Data Collection Rule (dcr-vm-sql-dev) association
+
+  Data Collection Rule
+    ==> perf counters (CPU, memory, disk, SQL Server metrics) --> Log Analytics
+    ==> Windows event logs (Application, System) --> Log Analytics
+
+
+OBSERVABILITY LAYER
+  Log Analytics Workspace (law-labmonitor-dev)
+    Central data sink for ALL logs, metrics, and diagnostics.
+    Receives data from every resource above.
+
+  Application Insights (appi-labmonitor-dev) [workspace-based]
+    ==> workspace-based ingestion --> Log Analytics Workspace
+    Collects: requests, dependencies, exceptions, distributed tracing
+
+
+================================================================================
+ Deployment Order (resolved automatically by Bicep)
+================================================================================
+
+  1. Log Analytics Workspace        -- deployed first, referenced by everything
+  2. Application Insights           -- depends on Log Analytics
+  3. App Service Plan               -- no observability dependency
+  4. Frontend + Backend App Services -- depend on Plan + App Insights + Log Analytics
+  5. Azure SQL Server + Database    -- depend on Log Analytics (diagnostics)
+  6. VM networking chain:
+       VNet --> Subnet --> NSG --> NIC --> VM --> AMA Extension --> DCR Association
+  7. Azure Front Door               -- deployed last, needs App Service hostnames
+
+
+================================================================================
+ Observability Coverage by Layer
+================================================================================
+
+  Layer              | Resource                  | What is monitored
+  -------------------|---------------------------|-------------------------------------
+  Edge               | Azure Front Door          | Access logs, health probes, WAF logs,
+                     |                           | request latency, origin health
+  -------------------|---------------------------|-------------------------------------
+  Application        | App Service (Frontend)    | HTTP logs, app logs, platform metrics,
+                     |                           | health checks, App Insights telemetry
+                     | App Service (Backend API) | Same as frontend + SQL dependency
+                     |                           | tracking, distributed tracing
+  -------------------|---------------------------|-------------------------------------
+  Database (PaaS)    | Azure SQL Database        | Audit logs, query store stats,
+                     |                           | deadlocks, timeouts, DTU metrics
+  -------------------|---------------------------|-------------------------------------
+  Database (IaaS)    | VM + SQL Server           | Boot diagnostics, perf counters
+                     |                           | (CPU, memory, disk, SQL metrics),
+                     |                           | Windows event logs
+  -------------------|---------------------------|-------------------------------------
+  Observability      | Application Insights      | APM: requests, dependencies,
+                     |                           | exceptions, distributed tracing
+                     | Log Analytics Workspace   | Central KQL queries, workbooks,
+                     |                           | alerts, cross-resource correlation

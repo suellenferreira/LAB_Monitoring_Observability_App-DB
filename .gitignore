@@ -1,0 +1,20 @@
+# Ignore compiled ARM templates
+*.json
+!bicepconfig.json
+
+# Environment files
+.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Terraform (in case of future use)
+.terraform/
+*.tfstate
+*.tfstate.backup
