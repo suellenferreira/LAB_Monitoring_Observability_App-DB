@@ -170,7 +170,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
-// SQL Virtual Machine resource — enables SQL IaaS Agent and Mixed Mode auth
+// SQL Virtual Machine resource — enables SQL IaaS Agent
 resource sqlVm 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2023-10-01' = {
   name: vmName
   location: location
@@ -178,14 +178,6 @@ resource sqlVm 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2023-10-01' = {
     virtualMachineResourceId: vm.id
     sqlManagement: 'Full'
     sqlServerLicenseType: 'PAYG'
-    serverConfigurationsManagementSettings: {
-      sqlConnectivityUpdateSettings: {
-        connectivityType: 'PUBLIC'
-        port: 1433
-        sqlAuthUpdateUserName: adminUsername
-        sqlAuthUpdatePassword: adminPassword
-      }
-    }
   }
 }
 
@@ -204,6 +196,7 @@ resource amaExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
 }
 
 // Custom Script Extension: downloads and restores AdventureWorks sample database
+// Uses single-user mode to grant SYSTEM sysadmin, then restores via Windows auth
 resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm
   name: 'InstallAdventureWorks'
@@ -216,7 +209,7 @@ resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@202
     autoUpgradeMinorVersion: true
     settings: {}
     protectedSettings: {
-      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\\SQLBackups -ItemType Directory -Force; $ProgressPreference = \'SilentlyContinue\'; Invoke-WebRequest -Uri \'https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak\' -OutFile \'C:\\SQLBackups\\AdventureWorks2022.bak\'; Invoke-Sqlcmd -Username \'${adminUsername}\' -Password \'${adminPassword}\' -Query \\"RESTORE DATABASE [AdventureWorks2022] FROM DISK = N\'C:\\SQLBackups\\AdventureWorks2022.bak\' WITH MOVE \'AdventureWorks2022\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022.mdf\', MOVE \'AdventureWorks2022_log\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022_log.ldf\', REPLACE\\" -ServerInstance \'localhost\'"'
+      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\\SQLBackups -ItemType Directory -Force; $ProgressPreference = \'SilentlyContinue\'; Invoke-WebRequest -Uri \'https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak\' -OutFile \'C:\\SQLBackups\\AdventureWorks2022.bak\'; Stop-Service SQLSERVERAGENT -Force -ErrorAction SilentlyContinue; Stop-Service MSSQLSERVER -Force; net start MSSQLSERVER /m; Invoke-Sqlcmd -ServerInstance \'localhost\' -Query \'ALTER SERVER ROLE sysadmin ADD MEMBER [NT AUTHORITY\\SYSTEM]\'; net stop MSSQLSERVER /y; net start MSSQLSERVER; Start-Sleep -Seconds 10; Invoke-Sqlcmd -ServerInstance \'localhost\' -Query \\"RESTORE DATABASE [AdventureWorks2022] FROM DISK = N\'C:\\SQLBackups\\AdventureWorks2022.bak\' WITH MOVE \'AdventureWorks2022\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022.mdf\', MOVE \'AdventureWorks2022_log\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022_log.ldf\', REPLACE\\"; Start-Service SQLSERVERAGENT -ErrorAction SilentlyContinue"'
     }
   }
 }
