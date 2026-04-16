@@ -34,6 +34,10 @@ param entraAdminObjectId string = ''
 @description('Entra ID admin login name (e.g. user@domain.com or group name).')
 param entraAdminLogin string = ''
 
+@description('Entra ID admin principal type: Group (for user/group) or Application (for service principal).')
+@allowed(['Group', 'Application'])
+param entraAdminPrincipalType string = 'Application'
+
 @description('Resource ID of the Log Analytics workspace.')
 param logAnalyticsWorkspaceId string
 
@@ -58,7 +62,7 @@ resource sqlServerEntraOnly 'Microsoft.Sql/servers@2023-08-01-preview' = if (aut
     publicNetworkAccess: 'Enabled'
     administrators: {
       administratorType: 'ActiveDirectory'
-      principalType: 'Group'
+      principalType: entraAdminPrincipalType
       login: entraAdminLogin
       sid: entraAdminObjectId
       tenantId: tenant().tenantId
@@ -78,7 +82,7 @@ resource sqlServerSqlAndEntra 'Microsoft.Sql/servers@2023-08-01-preview' = if (a
     publicNetworkAccess: 'Enabled'
     administrators: {
       administratorType: 'ActiveDirectory'
-      principalType: 'Group'
+      principalType: entraAdminPrincipalType
       login: entraAdminLogin
       sid: entraAdminObjectId
       tenantId: tenant().tenantId

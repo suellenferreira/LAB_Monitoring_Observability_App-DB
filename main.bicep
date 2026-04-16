@@ -59,6 +59,17 @@ param sqlEntraAdminObjectId string = ''
 @description('Entra ID admin login name (e.g. user@domain.com or group name) for Azure SQL.')
 param sqlEntraAdminLogin string = ''
 
+@description('Entra ID admin principal type: Group (for user/group) or Application (for service principal).')
+@allowed(['Group', 'Application'])
+param sqlEntraAdminPrincipalType string = 'Application'
+
+@description('Service Principal client ID for Azure SQL authentication (Active Directory Service Principal mode).')
+param spClientId string = ''
+
+@secure()
+@description('Service Principal client secret for Azure SQL authentication.')
+param spClientSecret string = ''
+
 @description('Administrator login for the SQL Server VM (IaaS).')
 param vmAdminUsername string
 
@@ -111,9 +122,14 @@ param subnetAddressPrefix string = '10.100.1.0/24'
 var nameSuffix = '${projectPrefix}-${environment}'
 var sqlServerName = 'sql-${nameSuffix}'
 var sqlDatabaseDbName = 'sqldb-${nameSuffix}'
-// PaaS connection string: Entra ID (Managed Identity) when entraOnly, SQL auth otherwise
-var sqlConnectionString = sqlAuthMode == 'entraOnly' 
-  ? 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};Authentication=Active Directory Default;TrustServerCertificate=True;'
+// PaaS connection string:
+//  - entraOnly + SP credentials → Active Directory Service Principal (MCAPS-compliant)
+//  - entraOnly without SP → Active Directory Default (managed identity)
+//  - sqlAndEntra → SQL authentication (User ID + Password)
+var sqlConnectionString = sqlAuthMode == 'entraOnly'
+  ? (spClientId != ''
+    ? 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};Authentication=Active Directory Service Principal;User Id=${spClientId};Password=${spClientSecret};Encrypt=True;TrustServerCertificate=False;'
+    : 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};Authentication=Active Directory Default;TrustServerCertificate=True;')
   : 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};User ID=${sqlAdminLogin};Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=True;'
 
 // ============================================================================
@@ -209,6 +225,7 @@ module sqlDatabase 'modules/sql-database.bicep' = {
     adminPassword: sqlAdminPassword
     entraAdminObjectId: sqlEntraAdminObjectId
     entraAdminLogin: sqlEntraAdminLogin
+    entraAdminPrincipalType: sqlEntraAdminPrincipalType
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     skuName: sqlDatabaseSkuName
     skuTier: sqlDatabaseSkuTier

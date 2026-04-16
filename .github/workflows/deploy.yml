@@ -70,6 +70,14 @@ jobs:
           echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
           echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
 
+      - name: Extract SP credentials
+        run: |
+          SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
+          echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -94,8 +102,11 @@ jobs:
             sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
             sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
+            sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
             sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            spClientId=${{ env.SP_CLIENT_ID }}
+            spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
             appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
@@ -132,6 +143,14 @@ jobs:
           echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
           echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
 
+      - name: Extract SP credentials
+        run: |
+          SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
+          echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -150,8 +169,11 @@ jobs:
             sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
             sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
+            sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
             sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            spClientId=${{ env.SP_CLIENT_ID }}
+            spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
             appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
@@ -188,6 +210,14 @@ jobs:
           echo "LOCATION=${{ github.event.inputs.location || env.LOCATION_DEFAULT }}" >> $GITHUB_ENV
           echo "PROJECT_PREFIX=${{ github.event.inputs.projectPrefix || env.PROJECT_PREFIX_DEFAULT }}" >> $GITHUB_ENV
           echo "ENVIRONMENT=${{ github.event.inputs.environment || env.ENVIRONMENT_DEFAULT }}" >> $GITHUB_ENV
+
+      - name: Extract SP credentials
+        run: |
+          SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
+          SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
+          echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
+          echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -264,8 +294,11 @@ jobs:
             sqlAuthMode=${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}
             sqlEntraAdminObjectId=${{ secrets.SQL_ENTRA_ADMIN_OBJECT_ID }}
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
+            sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
             sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            spClientId=${{ env.SP_CLIENT_ID }}
+            spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
             vmAdminPassword=${{ secrets.VM_ADMIN_PASSWORD }}
             appServicePlanSku=${{ env.APP_SERVICE_PLAN_SKU }}
