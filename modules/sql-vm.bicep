@@ -170,6 +170,25 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
+// SQL Virtual Machine resource — enables SQL IaaS Agent and Mixed Mode auth
+resource sqlVm 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2023-10-01' = {
+  name: vmName
+  location: location
+  properties: {
+    virtualMachineResourceId: vm.id
+    sqlManagement: 'Full'
+    sqlServerLicenseType: 'PAYG'
+    serverConfigurationsManagementSettings: {
+      sqlConnectivityUpdateSettings: {
+        connectivityType: 'PUBLIC'
+        port: 1433
+        sqlAuthUpdateUserName: adminUsername
+        sqlAuthUpdatePassword: adminPassword
+      }
+    }
+  }
+}
+
 // Azure Monitor Agent extension — collects guest OS telemetry
 resource amaExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: vm
@@ -189,7 +208,7 @@ resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@202
   parent: vm
   name: 'InstallAdventureWorks'
   location: location
-  dependsOn: [amaExtension]
+  dependsOn: [amaExtension, sqlVm]
   properties: {
     publisher: 'Microsoft.Compute'
     type: 'CustomScriptExtension'
