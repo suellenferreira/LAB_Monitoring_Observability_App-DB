@@ -11,7 +11,7 @@ param environment = 'dev'
 // App Service Settings
 // ===========================================================================
 param appServicePlanSku = 'S1'
-param frontendLinuxFxVersion = 'NODE|20-lts'
+param frontendLinuxFxVersion = 'DOTNETCORE|8.0'
 param backendLinuxFxVersion = 'DOTNETCORE|8.0'
 
 // ===========================================================================

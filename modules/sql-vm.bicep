@@ -184,6 +184,23 @@ resource amaExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
   }
 }
 
+// Custom Script Extension: downloads and restores AdventureWorks sample database
+resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: vm
+  name: 'InstallAdventureWorks'
+  location: location
+  dependsOn: [amaExtension]
+  properties: {
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
+    autoUpgradeMinorVersion: true
+    settings: {
+      commandToExecute: 'powershell -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\\SQLBackups -ItemType Directory -Force; $ProgressPreference = \'SilentlyContinue\'; Invoke-WebRequest -Uri \'https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak\' -OutFile \'C:\\SQLBackups\\AdventureWorks2022.bak\'; Invoke-Sqlcmd -Query \\"RESTORE DATABASE [AdventureWorks2022] FROM DISK = N\'C:\\SQLBackups\\AdventureWorks2022.bak\' WITH MOVE \'AdventureWorks2022\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022.mdf\', MOVE \'AdventureWorks2022_log\' TO \'C:\\Program Files\\Microsoft SQL Server\\MSSQL16.MSSQLSERVER\\MSSQL\\DATA\\AdventureWorks2022_log.ldf\', REPLACE\\" -ServerInstance \'localhost\'"'
+    }
+  }
+}
+
 // Data Collection Rule: defines what guest OS data to collect
 resource dcr 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
   name: 'dcr-${vmName}'

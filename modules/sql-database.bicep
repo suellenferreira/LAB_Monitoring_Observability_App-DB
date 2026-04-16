@@ -141,6 +141,7 @@ resource sqlDatabaseEntraOnly 'Microsoft.Sql/servers/databases@2023-08-01-previe
     collation: collation
     maxSizeBytes: maxSizeBytes
     zoneRedundant: false
+    sampleName: 'AdventureWorksLT'
   }
 }
 
@@ -156,6 +157,7 @@ resource sqlDatabaseSqlAndEntra 'Microsoft.Sql/servers/databases@2023-08-01-prev
     collation: collation
     maxSizeBytes: maxSizeBytes
     zoneRedundant: false
+    sampleName: 'AdventureWorksLT'
   }
 }
 

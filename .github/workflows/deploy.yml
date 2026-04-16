@@ -278,3 +278,38 @@ jobs:
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false
+
+      # ── Build & Deploy .NET Applications ──
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Backend API
+        run: dotnet publish src/backend/BackendApi.csproj -c Release -o ${{ runner.temp }}/backend
+
+      - name: Build Frontend App
+        run: dotnet publish src/frontend/FrontendApp.csproj -c Release -o ${{ runner.temp }}/frontend
+
+      - name: Deploy Backend API to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: app-backend-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}
+          package: ${{ runner.temp }}/backend
+
+      - name: Deploy Frontend App to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: app-frontend-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}
+          package: ${{ runner.temp }}/frontend
+
+      - name: Display application URLs
+        run: |
+          echo "========================================"
+          echo "  Application URLs"
+          echo "========================================"
+          echo "  Frontend : https://app-frontend-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}.azurewebsites.net"
+          echo "  Backend  : https://app-backend-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}.azurewebsites.net"
+          echo "  API Health: https://app-backend-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}.azurewebsites.net/api/health"
+          echo "========================================"

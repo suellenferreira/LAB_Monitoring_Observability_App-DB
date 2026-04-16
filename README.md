@@ -12,25 +12,25 @@ Azure demo environment showcasing end-to-end observability across a full-stack a
                 ┌────────────┴────────────┐
                 │                         │
         ┌───────▼───────┐       ┌─────────▼────────┐
-        │  App Service   │       │   App Service     │
-        │  (Frontend)    │       │   (Backend API)   │
+        │  App Service  │       │   App Service    │
+        │  (Frontend)   │       │   (Backend API)  │
         └───────┬───────┘       └─────────┬────────┘
                 │                         │
                 │    ┌────────────────────┤
                 │    │                    │
         ┌───────▼────▼──┐       ┌────────▼─────────┐
-        │  Application   │       │  Azure SQL DB     │
-        │  Insights      │       │  (PaaS)           │
+        │  Application  │       │  Azure SQL DB    │
+        │  Insights     │       │  (PaaS)          │
         └───────┬───────┘       └────────┬─────────┘
                 │                         │
         ┌───────▼─────────────────────────▼────────┐
         │         Log Analytics Workspace           │
         └───────▲──────────────────────────────────┘
                 │
-        ┌───────┴─────────┐
-        │  Azure VM with   │
+        ┌───────┴───────────┐
+        │  Azure VM with    │
         │  SQL Server (IaaS)│  ← Boot diag, AMA, perf counters, event logs
-        └─────────────────┘
+        └───────────────────┘
 ```
 
 ## Resources Deployed
@@ -198,12 +198,66 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── sql-database.bicep      # Azure SQL Server + Database + diagnostics (Entra ID / SQL auth)
 │   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR
 │   └── front-door.bicep        # Azure Front Door + diagnostics
+├── src/
+│   ├── backend/                # ASP.NET Core 8 Web API (AdventureWorksLT)
+│   │   ├── BackendApi.csproj
+│   │   ├── Program.cs          # Minimal API: /api/products, /api/customers, /api/orders, /api/categories
+│   │   └── appsettings.json
+│   └── frontend/               # ASP.NET Core 8 Razor Pages dashboard
+│       ├── FrontendApp.csproj
+│       ├── Program.cs
+│       ├── Pages/
+│       │   ├── Index.cshtml    # Dashboard with summary cards + recent data
+│       │   ├── Products.cshtml # Product catalog table
+│       │   ├── Customers.cshtml # Customer directory
+│       │   └── Orders.cshtml   # Sales order history
+│       └── wwwroot/css/site.css
 ├── deploy-config.cfg           # ← Single file for all tunable deployment parameters
 ├── main.bicep                  # Main orchestration template
 ├── main.bicepparam             # Bicep parameters file (for local CLI deployments)
 ├── topology.mmd                # Mermaid topology diagram
 ├── TOPOLOGY.txt                # Plain-text topology description
 └── README.md
+```
+
+## Demo Applications
+
+The lab includes two working .NET 8 applications that query the **AdventureWorksLT** sample database:
+
+### Backend API (`src/backend/`)
+
+Minimal ASP.NET Core Web API with the following endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/health` | Health check (returns status + timestamp) |
+| `GET /api/products` | Top 50 products from `SalesLT.Product` |
+| `GET /api/categories` | All product categories from `SalesLT.ProductCategory` |
+| `GET /api/customers` | Top 50 customers from `SalesLT.Customer` |
+| `GET /api/orders` | Top 50 sales orders from `SalesLT.SalesOrderHeader` |
+
+### Frontend App (`src/frontend/`)
+
+ASP.NET Core Razor Pages dashboard with Bootstrap 5 UI:
+
+- **Dashboard** — Summary cards (product/customer/order/category counts) and recent data tables
+- **Products** — Full product catalog with pricing, colors, and sizes
+- **Customers** — Customer directory with email and company info
+- **Orders** — Sales order history with status badges and totals
+
+### Sample Data
+
+| Database | Location | Sample Data |
+|----------|----------|-------------|
+| Azure SQL Database (PaaS) | `sql-<prefix>-<env>` | **AdventureWorksLT** — Products, Customers, Orders (auto-provisioned via `sampleName`) |
+| SQL Server on VM (IaaS) | `vm-sql-<prefix>-<env>` | **AdventureWorks2022** — Full database (restored via CustomScriptExtension) |
+
+### Application URLs (after deployment)
+
+```
+Frontend:   https://app-frontend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.net
+Backend:    https://app-backend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.net
+API Health: https://app-backend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.net/api/health
 ```
 
 ## Observability Features by Layer

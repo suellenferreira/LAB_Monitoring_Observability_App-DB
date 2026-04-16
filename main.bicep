@@ -78,7 +78,7 @@ param appInsightsRetentionDays int = 90
 
 // -- Runtime Stacks --
 @description('Linux runtime stack for the frontend App Service.')
-param frontendLinuxFxVersion string = 'NODE|20-lts'
+param frontendLinuxFxVersion string = 'DOTNETCORE|8.0'
 
 @description('Linux runtime stack for the backend API App Service.')
 param backendLinuxFxVersion string = 'DOTNETCORE|8.0'
@@ -102,13 +102,19 @@ param osDiskStorageType string = 'StandardSSD_LRS'
 
 // -- Networking --
 @description('VNet address space CIDR for the SQL VM network.')
-param vnetAddressPrefix string = '10.0.0.0/16'
+param vnetAddressPrefix string = '10.100.0.0/16'
 
 @description('SQL subnet CIDR within the VNet.')
-param subnetAddressPrefix string = '10.0.1.0/24'
+param subnetAddressPrefix string = '10.100.1.0/24'
 
 // -- Variables --
 var nameSuffix = '${projectPrefix}-${environment}'
+var sqlServerName = 'sql-${nameSuffix}'
+var sqlDatabaseDbName = 'sqldb-${nameSuffix}'
+// Connection string using Entra ID (Managed Identity) when entraOnly, or SQL auth otherwise
+var sqlConnectionString = sqlAuthMode == 'entraOnly' 
+  ? 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};Authentication=Active Directory Default;TrustServerCertificate=True;'
+  : 'Server=tcp:${sqlServerName}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabaseDbName};User ID=${sqlAdminLogin};Password=${sqlAdminPassword};Encrypt=True;TrustServerCertificate=False;'
 
 // ============================================================================
 // MODULE: Log Analytics Workspace
@@ -145,6 +151,7 @@ module appServicePlan 'modules/app-service-plan.bicep' = {
     location: location
     planName: 'asp-${nameSuffix}'
     skuName: appServicePlanSku
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
   }
 }
 
@@ -162,6 +169,7 @@ module frontendApp 'modules/app-service-frontend.bicep' = {
     appInsightsInstrumentationKey: appInsights.outputs.instrumentationKey
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     linuxFxVersion: frontendLinuxFxVersion
+    backendApiUrl: 'https://app-backend-${nameSuffix}.azurewebsites.net'
   }
 }
 
@@ -180,6 +188,7 @@ module backendApp 'modules/app-service-backend.bicep' = {
     appInsightsInstrumentationKey: appInsights.outputs.instrumentationKey
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     linuxFxVersion: backendLinuxFxVersion
+    sqlConnectionString: sqlConnectionString
   }
 }
 

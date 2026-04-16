@@ -1,0 +1,8 @@
+body { padding-bottom: 60px; }
+.card-stat { transition: transform 0.15s; }
+.card-stat:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,.1); }
+.table th { white-space: nowrap; }
+.badge-status-1 { background-color: #198754; }
+.badge-status-2 { background-color: #0d6efd; }
+.badge-status-3 { background-color: #ffc107; color: #000; }
+.badge-status-5 { background-color: #6c757d; }

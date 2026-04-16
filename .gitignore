@@ -1,6 +1,7 @@
 # Ignore compiled ARM templates
 *.json
 !bicepconfig.json
+!appsettings*.json
 
 # Environment files
 .env
@@ -18,3 +19,9 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo

@@ -26,8 +26,11 @@ param appInsightsInstrumentationKey string
 @description('Resource ID of the Log Analytics workspace for diagnostic settings.')
 param logAnalyticsWorkspaceId string
 
-@description('Linux runtime stack for the frontend (e.g. NODE|20-lts, PYTHON|3.12).')
-param linuxFxVersion string = 'NODE|20-lts'
+@description('Linux runtime stack for the frontend (e.g. DOTNETCORE|8.0, NODE|20-lts).')
+param linuxFxVersion string = 'DOTNETCORE|8.0'
+
+@description('Backend API base URL.')
+param backendApiUrl string = ''
 
 resource frontendApp 'Microsoft.Web/sites@2023-12-01' = {
   name: appName
@@ -59,6 +62,10 @@ resource frontendApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'XDT_MicrosoftApplicationInsights_Mode'
           value: 'Recommended'
+        }
+        {
+          name: 'BackendApi__BaseUrl'
+          value: backendApiUrl
         }
       ]
     }

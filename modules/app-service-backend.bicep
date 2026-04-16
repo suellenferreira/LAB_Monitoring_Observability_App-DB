@@ -29,6 +29,9 @@ param logAnalyticsWorkspaceId string
 @description('Linux runtime stack for the backend API (e.g. DOTNETCORE|8.0, PYTHON|3.12).')
 param linuxFxVersion string = 'DOTNETCORE|8.0'
 
+@description('SQL connection string for the backend API.')
+param sqlConnectionString string = ''
+
 resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
   name: appName
   location: location
@@ -58,6 +61,10 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'XDT_MicrosoftApplicationInsights_Mode'
           value: 'Recommended'
+        }
+        {
+          name: 'ConnectionStrings__DefaultConnection'
+          value: sqlConnectionString
         }
       ]
     }

@@ -12,6 +12,9 @@ param planName string
 @description('SKU name for the App Service Plan.')
 param skuName string = 'S1'
 
+@description('Resource ID of the Log Analytics workspace for diagnostic settings.')
+param logAnalyticsWorkspaceId string
+
 resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: planName
   location: location
@@ -21,6 +24,21 @@ resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   kind: 'linux'
   properties: {
     reserved: true
+  }
+}
+
+// Diagnostic settings — sends App Service Plan metrics to Log Analytics
+resource planDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-${planName}'
+  scope: plan
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
 

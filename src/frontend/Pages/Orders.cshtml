@@ -1,0 +1,53 @@
+@page
+@model OrdersModel
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<h2><i class="bi bi-receipt"></i> Sales Orders</h2>
+<p class="text-muted">AdventureWorksLT sales order history</p>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.Orders)
+            {
+                <tr>
+                    <td><code>SO-@o.OrderId</code></td>
+                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                    <td>@o.CustomerName</td>
+                    <td>
+                        @{
+                            var (badge, label) = o.Status switch
+                            {
+                                1 => ("bg-warning text-dark", "In Process"),
+                                2 => ("bg-info", "Approved"),
+                                3 => ("bg-primary", "Back-ordered"),
+                                5 => ("bg-success", "Shipped"),
+                                6 => ("bg-secondary", "Cancelled"),
+                                _ => ("bg-dark", $"Status {o.Status}")
+                            };
+                        }
+                        <span class="badge @badge">@label</span>
+                    </td>
+                    <td class="text-end"><strong>@o.TotalDue.ToString("C")</strong></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p class="text-muted"><small>Showing @Model.Orders.Count orders</small></p>
