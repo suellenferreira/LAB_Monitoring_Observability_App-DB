@@ -90,37 +90,17 @@
         "version": "LinkItem/1.0",
         "style": "tabs",
         "links": [
-          { "id": "link-tab-a", "cellValue": "tabA", "linkTarget": "parameter", "linkLabel": "A. E2E Overview", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-b", "cellValue": "tabB", "linkTarget": "parameter", "linkLabel": "B. Edge (Front Door)", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-c", "cellValue": "tabC", "linkTarget": "parameter", "linkLabel": "C. Frontend", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-d", "cellValue": "tabD", "linkTarget": "parameter", "linkLabel": "D. Backend (API)", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-e", "cellValue": "tabE", "linkTarget": "parameter", "linkLabel": "E. Dependencies (E2E)", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-f", "cellValue": "tabF", "linkTarget": "parameter", "linkLabel": "F. Database (SQL)", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-g", "cellValue": "tabG", "linkTarget": "parameter", "linkLabel": "G. Availability / SLO", "subTarget": "SelectedTab", "style": "link" },
-          { "id": "link-tab-h", "cellValue": "tabH", "linkTarget": "parameter", "linkLabel": "H. Investigations", "subTarget": "SelectedTab", "style": "link" }
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "A. E2E Overview", "subTarget": "tabA", "style": "primary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "B. Edge (Front Door)", "subTarget": "tabB", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "C. Frontend", "subTarget": "tabC", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "D. Backend (API)", "subTarget": "tabD", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "E. Dependencies (E2E)", "subTarget": "tabE", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "F. Database (SQL)", "subTarget": "tabF", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "G. Availability / SLO", "subTarget": "tabG", "style": "secondary" },
+          { "cellValue": "SelectedTab", "linkTarget": "parameter", "linkLabel": "H. Investigations", "subTarget": "tabH", "style": "secondary" }
         ]
       },
       "name": "tab-navigation"
-    },
-
-    {
-      "type": 9,
-      "content": {
-        "version": "KqlParameterItem/1.0",
-        "parameters": [
-          {
-            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000006",
-            "version": "KqlParameterItem/1.0",
-            "name": "SelectedTab",
-            "type": 1,
-            "isRequired": false,
-            "isHiddenWhenLocked": true,
-            "value": "tabA"
-          }
-        ],
-        "style": "above"
-      },
-      "name": "hidden-selected-tab"
     },
 
 
@@ -210,9 +190,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabA" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabA" },
       "name": "group-tab-a"
     },
 
@@ -315,9 +293,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabB" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabB" },
       "name": "group-tab-b"
     },
 
@@ -397,9 +373,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabC" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabC" },
       "name": "group-tab-c"
     },
 
@@ -485,9 +459,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabD" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabD" },
       "name": "group-tab-d"
     },
 
@@ -631,9 +603,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabE" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabE" },
       "name": "group-tab-e"
     },
 
@@ -811,9 +781,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabF" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabF" },
       "name": "group-tab-f"
     },
 
@@ -923,9 +891,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabG" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabG" },
       "name": "group-tab-g"
     },
 
@@ -1092,9 +1058,7 @@
           }
         ]
       },
-      "conditionalVisibilities": [
-        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabH" }
-      ],
+      "conditionalVisibility": { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabH" },
       "name": "group-tab-h"
     }
   ],
