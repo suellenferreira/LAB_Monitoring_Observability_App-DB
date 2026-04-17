@@ -258,6 +258,8 @@ resource dcr 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
             '\\SQLServer:SQL Statistics\\Batch Requests/sec'
             '\\SQLServer:Buffer Manager\\Buffer cache hit ratio'
             '\\SQLServer:Locks(_Total)\\Number of Deadlocks/sec'
+            '\\Network Interface(*)\\Bytes Total/sec'
+            '\\SQLServer:Databases(*)\\Transactions/sec'
           ]
         }
       ]
@@ -300,6 +302,70 @@ resource dcrAssociation 'Microsoft.Insights/dataCollectionRuleAssociations@2023-
   scope: vm
   properties: {
     dataCollectionRuleId: dcr.id
+  }
+}
+
+// -- Network Diagnostic Settings --
+// NSG: Network Security Group flow events and rule counters
+resource nsgDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-nsg-${vmName}'
+  scope: nsg
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'NetworkSecurityGroupEvent'
+        enabled: true
+      }
+      {
+        category: 'NetworkSecurityGroupRuleCounter'
+        enabled: true
+      }
+    ]
+  }
+}
+
+// Public IP: DDoS protection signals and traffic metrics
+resource pipDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-pip-${vmName}'
+  scope: publicIp
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'DDoSProtectionNotifications'
+        enabled: true
+      }
+      {
+        category: 'DDoSMitigationFlowLogs'
+        enabled: true
+      }
+      {
+        category: 'DDoSMitigationReports'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
+// NIC: Network interface traffic metrics
+resource nicDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-nic-${vmName}'
+  scope: nic
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
 

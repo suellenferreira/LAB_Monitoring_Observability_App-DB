@@ -42,8 +42,10 @@ Azure demo environment showcasing end-to-end observability across a full-stack a
 | **App Service (Frontend)** | Web frontend | HTTP logs, app logs, platform metrics, health checks |
 | **App Service (Backend API)** | REST API | HTTP logs, dependency tracking, SQL call tracing |
 | **Azure SQL Database** | PaaS database | Audit logs, query stats, deadlocks, DTU metrics |
-| **Azure VM + SQL Server** | IaaS database | Boot diagnostics, perf counters, event logs, SQL metrics |
+| **Azure VM + SQL Server** | IaaS database | Boot diagnostics, perf counters, event logs, SQL metrics, NSG/PIP/NIC diagnostics |
 | **Azure Front Door** | Global load balancer | Access logs, health probes, WAF logs, latency metrics |
+| **Availability Tests** | Proactive uptime monitoring | URL ping tests from 5 global locations (Frontend + Backend API) |
+| **Azure Monitor Workbook** | E2E observability dashboard | 8-tab workbook: Edge → App → Dependencies → DB → SLO → Investigations |
 
 ## Prerequisites
 
@@ -196,8 +198,10 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── app-service-frontend.bicep  # Frontend App Service + diagnostics
 │   ├── app-service-backend.bicep   # Backend API App Service + diagnostics
 │   ├── sql-database.bicep      # Azure SQL Server + Database + diagnostics (Entra ID / SQL auth)
-│   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR
-│   └── front-door.bicep        # Azure Front Door + diagnostics
+│   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR + NSG/PIP/NIC diagnostics
+│   ├── front-door.bicep        # Azure Front Door + diagnostics
+│   ├── availability-tests.bicep    # Standard URL ping tests (Frontend + Backend)
+│   └── workbook.bicep          # E2E Observability Workbook (8 tabs)
 ├── src/
 │   ├── backend/                # ASP.NET Core 8 Web API (PaaS + IaaS)
 │   │   ├── BackendApi.csproj
@@ -289,6 +293,71 @@ Frontend:   https://app-frontend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.ne
 Backend:    https://app-backend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.net
 API Health: https://app-backend-<PROJECT_PREFIX>-<ENVIRONMENT>.azurewebsites.net/api/health
 ```
+
+## Azure Monitor Workbook — E2E Observability
+
+The lab includes a custom-built **Azure Monitor Workbook** deployed as Infrastructure-as-Code via Bicep. It provides a single pane of glass across all monitoring layers.
+
+### Workbook Tabs
+
+| Tab | Title | What It Shows |
+|-----|-------|---------------|
+| **A** | E2E Overview | Health badges per layer, request volume sparklines, latency percentiles, top errors |
+| **B** | Edge: Front Door | Request trends, edge latency percentiles, HTTP 4xx/5xx rates, health probe results, top URLs |
+| **C** | Frontend (FE) | Request rate & failures, response time distribution, exceptions, top operations, HTTP logs |
+| **D** | Backend (API) | Same as FE plus SQL dependency call breakdown, top API endpoints |
+| **E** | Dependencies & Flow | FE→BE HTTP calls, BE→SQL calls, latency waterfall by layer, failed dependency breakdown |
+| **F** | Database (SQL) | **PaaS**: DTU/CPU, deadlocks, query wait stats. **IaaS**: CPU/memory, SQL counters, disk I/O, network, Windows events. Both: app-side SQL dependency latency |
+| **G** | Availability / SLO | Availability test results (%), success rate SLI, P95 latency vs target, error budget burn |
+| **H** | Investigations | Parameter-driven drilldown: operation picker, severity filter, request grid, traces, exceptions, failed dependencies, Windows event log |
+
+### Shared Parameters
+
+All tabs share these parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| **TimeRange** | Time picker | Default: Last 24 hours. Options: 1h, 4h, 24h, 3d, 7d |
+| **Subscription** | Subscription picker | Scopes resource graph queries |
+| **Application Insights** | Resource picker | Targets App Insights for APM queries |
+| **Log Analytics Workspace** | Resource picker | Targets LAW for infrastructure logs |
+| **Front Door Profile** | Resource picker | Targets AFD for edge metrics |
+
+### Data Sources Used
+
+```
+Workbook queries pull from:
+  ├── Application Insights (APM)
+  │    ├── requests          → FE/BE request rate, latency, failures
+  │    ├── dependencies      → FE→BE, BE→SQL call metrics
+  │    ├── exceptions        → Error tracking
+  │    ├── traces            → Application log messages
+  │    └── availabilityResults → URL ping test results (SLO)
+  │
+  └── Log Analytics Workspace (Infrastructure)
+       ├── AzureDiagnostics  → Front Door access/probe logs, SQL diagnostics
+       ├── AzureMetrics      → SQL DTU/CPU, connection metrics
+       ├── Perf              → VM guest OS counters (CPU, memory, disk, SQL, network)
+       ├── Event             → Windows Event Log (errors, warnings)
+       └── AppServiceHTTPLogs → App Service HTTP status codes
+```
+
+### Accessing the Workbook
+
+After deployment, navigate to:
+1. **Azure Portal** → **Monitor** → **Workbooks**
+2. Or: **Application Insights** → **Workbooks** → `E2E Observability — <prefix>-<env>`
+
+## Availability Tests
+
+Two standard URL ping tests are deployed, running every 5 minutes from 5 global locations:
+
+| Test | URL | Validation |
+|------|-----|------------|
+| **Frontend Health** | `https://app-frontend-<prefix>-<env>.azurewebsites.net/` | HTTP 200 + valid SSL |
+| **Backend API Health** | `https://app-backend-<prefix>-<env>.azurewebsites.net/api/health` | HTTP 200 + response contains "healthy" + valid SSL |
+
+Results appear in the **Availability / SLO** tab (Tab G) of the workbook and in Application Insights → Availability.
 
 ## Observability Features by Layer
 

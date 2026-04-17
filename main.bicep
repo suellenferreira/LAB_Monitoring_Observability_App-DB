@@ -269,6 +269,36 @@ module frontDoor 'modules/front-door.bicep' = {
   }
 }
 
+// ============================================================================
+// MODULE: Availability Tests (Standard Web Tests)
+// Demonstrates: Proactive uptime monitoring from 5 global locations.
+// Results feed into Application Insights availabilityResults table.
+// ============================================================================
+module availabilityTests 'modules/availability-tests.bicep' = {
+  params: {
+    location: location
+    nameSuffix: nameSuffix
+    appInsightsId: appInsights.outputs.appInsightsId
+    frontendHostName: frontendApp.outputs.defaultHostName
+    backendHostName: backendApp.outputs.defaultHostName
+  }
+}
+
+// ============================================================================
+// MODULE: Azure Monitor Workbook — End-to-End Observability
+// Demonstrates: Custom workbook with 8 tabs covering Edge → App →
+// Dependencies → Database → SLO → Investigations, deployed as IaC.
+// ============================================================================
+module workbook 'modules/workbook.bicep' = {
+  params: {
+    location: location
+    nameSuffix: nameSuffix
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    appInsightsId: appInsights.outputs.appInsightsId
+    frontDoorProfileId: frontDoor.outputs.frontDoorProfileId
+  }
+}
+
 // -- Outputs --
 @description('Log Analytics Workspace ID for queries.')
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.workspaceId
