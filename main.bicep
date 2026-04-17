@@ -285,11 +285,12 @@ module availabilityTests 'modules/availability-tests.bicep' = {
 }
 
 // ============================================================================
-// MODULE: Azure Monitor Workbook — End-to-End Observability
-// Demonstrates: Custom workbook with 8 tabs covering Edge → App →
-// Dependencies → Database → SLO → Investigations, deployed as IaC.
+// MODULE: Azure Monitor Workbook v2 — End-to-End Observability
+// Raw JSON workbook definition loaded via loadTextContent to avoid
+// Bicep string-serialization issues. 8 tabs: E2E Overview, Edge,
+// Frontend, Backend, Dependencies, Database, Availability/SLO, Investigations.
 // ============================================================================
-module workbook 'modules/workbook.bicep' = {
+module workbook 'modules/workbook-v2.bicep' = {
   params: {
     location: location
     nameSuffix: nameSuffix

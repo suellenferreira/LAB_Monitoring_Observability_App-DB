@@ -1,0 +1,1102 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000001",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 43200000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 259200000 },
+                { "durationMs": 604800000 }
+              ],
+              "allowCustom": true
+            },
+            "value": { "durationMs": 86400000 }
+          },
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000002",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": false,
+            "query": "summarize by subscriptionId\n| project value = strcat('/subscriptions/', subscriptionId), label = subscriptionId, selected = true",
+            "crossComponentResources": [ "value::all" ],
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000003",
+            "version": "KqlParameterItem/1.0",
+            "name": "AppInsights",
+            "label": "Application Insights",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources\n| where type == 'microsoft.insights/components'\n| project value = id, label = name, selected = true",
+            "crossComponentResources": [ "{Subscription}" ],
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": "__APP_INSIGHTS_ID__"
+          },
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000004",
+            "version": "KqlParameterItem/1.0",
+            "name": "LogAnalyticsWorkspace",
+            "label": "Log Analytics Workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources\n| where type == 'microsoft.operationalinsights/workspaces'\n| project value = id, label = name, selected = true",
+            "crossComponentResources": [ "{Subscription}" ],
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": "__LAW_ID__"
+          },
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000005",
+            "version": "KqlParameterItem/1.0",
+            "name": "FrontDoorProfile",
+            "label": "Front Door Profile",
+            "type": 5,
+            "isRequired": false,
+            "query": "resources\n| where type == 'microsoft.cdn/profiles'\n| project value = id, label = name, selected = true",
+            "crossComponentResources": [ "{Subscription}" ],
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": "__FRONT_DOOR_ID__"
+          }
+        ],
+        "style": "above",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "global-parameters"
+    },
+
+    {
+      "type": 11,
+      "content": {
+        "version": "LinkItem/1.0",
+        "style": "tabs",
+        "links": [
+          { "id": "link-tab-a", "cellValue": "tabA", "linkTarget": "parameter", "linkLabel": "A. E2E Overview", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-b", "cellValue": "tabB", "linkTarget": "parameter", "linkLabel": "B. Edge (Front Door)", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-c", "cellValue": "tabC", "linkTarget": "parameter", "linkLabel": "C. Frontend", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-d", "cellValue": "tabD", "linkTarget": "parameter", "linkLabel": "D. Backend (API)", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-e", "cellValue": "tabE", "linkTarget": "parameter", "linkLabel": "E. Dependencies (E2E)", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-f", "cellValue": "tabF", "linkTarget": "parameter", "linkLabel": "F. Database (SQL)", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-g", "cellValue": "tabG", "linkTarget": "parameter", "linkLabel": "G. Availability / SLO", "subTarget": "SelectedTab", "style": "link" },
+          { "id": "link-tab-h", "cellValue": "tabH", "linkTarget": "parameter", "linkLabel": "H. Investigations", "subTarget": "SelectedTab", "style": "link" }
+        ]
+      },
+      "name": "tab-navigation"
+    },
+
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000006",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedTab",
+            "type": 1,
+            "isRequired": false,
+            "isHiddenWhenLocked": true,
+            "value": "tabA"
+          }
+        ],
+        "style": "above"
+      },
+      "name": "hidden-selected-tab"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## E2E Overview\nSingle pane of glass across all layers: Edge → Frontend → Backend → Database." },
+            "name": "tab-a-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let totalReqs = requests\n| where timestamp {TimeRange}\n| summarize Value = toreal(count())\n| extend Name = 'Total Requests', Order = 1;\nlet failPct = requests\n| where timestamp {TimeRange}\n| summarize Total = toreal(count()), Failed = toreal(countif(success == false))\n| extend Value = iff(Total > 0, round(Failed / Total * 100, 2), 0.0), Name = 'Failed %', Order = 2;\nlet p95Lat = requests\n| where timestamp {TimeRange}\n| summarize Value = coalesce(round(percentile(duration, 95), 0), 0.0)\n| extend Name = 'P95 Latency (ms)', Order = 3;\nlet depFailPct = dependencies\n| where timestamp {TimeRange}\n| summarize Total = toreal(count()), Failed = toreal(countif(success == false))\n| extend Value = iff(Total > 0, round(Failed / Total * 100, 2), 0.0), Name = 'Dep Failed %', Order = 4;\nlet depP95 = dependencies\n| where timestamp {TimeRange}\n| summarize Value = coalesce(round(percentile(duration, 95), 0), 0.0)\n| extend Name = 'Dep P95 (ms)', Order = 5;\nunion totalReqs, failPct, p95Lat, depFailPct, depP95\n| order by Order asc\n| project Name, Value",
+              "size": 4,
+              "title": "KPI Summary",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": { "columnMatch": "Name", "formatter": 1 },
+                "leftContent": {
+                  "columnMatch": "Value",
+                  "formatter": 12,
+                  "formatOptions": { "palette": "auto" },
+                  "numberFormat": { "unit": 0, "options": { "style": "decimal", "maximumFractionDigits": 1 } }
+                }
+              }
+            },
+            "name": "tab-a-kpi-tiles"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| summarize Total = count(), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Requests & Failures Over Time",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Total", "color": "blue" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-a-requests-timechart"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| summarize AvgMs = round(avg(duration), 1), P95ms = round(percentile(duration, 95), 1), Requests = count() by name\n| top 10 by P95ms desc\n| project Operation = name, Requests, AvgMs, P95ms",
+              "size": 0,
+              "title": "Top 10 Slowest Operations",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "P95ms", "sortOrder": 2 } ] }
+            },
+            "name": "tab-a-slow-ops"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| summarize Total = count(), Failed = countif(success == false) by name\n| extend FailPct = round(toreal(Failed) / toreal(Total) * 100, 2)\n| where Failed > 0\n| top 10 by Failed desc\n| project Operation = name, Total, Failed, FailPct",
+              "size": 0,
+              "title": "Top 10 Failing Operations",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "Failed", "sortOrder": 2 } ] }
+            },
+            "name": "tab-a-failing-ops"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabA" }
+      ],
+      "name": "group-tab-a"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Edge: Azure Front Door\nEdge health, latency, and error analysis. Uses `CDNAccessLog` and `CDNHealthProbeLog` resource-specific tables." },
+            "name": "tab-b-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "Request Count Trend",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-b-request-trend"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Total = count(), Err4xx = countif(HttpStatusCode >= 400 and HttpStatusCode < 500), Err5xx = countif(HttpStatusCode >= 500) by bin(TimeGenerated, 5m)\n| extend Pct4xx = round(toreal(Err4xx) / toreal(Total) * 100, 2), Pct5xx = round(toreal(Err5xx) / toreal(Total) * 100, 2)\n| project TimeGenerated, Pct4xx, Pct5xx\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "4xx / 5xx Error Rate (%)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Pct4xx", "label": "4xx %", "color": "orange" },
+                  { "seriesName": "Pct5xx", "label": "5xx %", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-b-error-rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| extend LatencyMs = TimeTaken * 1000\n| summarize P50 = round(percentile(LatencyMs, 50), 1), P90 = round(percentile(LatencyMs, 90), 1), P95 = round(percentile(LatencyMs, 95), 1) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "Edge Latency Percentiles (ms)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "P50", "color": "green" },
+                  { "seriesName": "P90", "color": "orange" },
+                  { "seriesName": "P95", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-b-latency"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| where HttpStatusCode >= 400\n| summarize ErrorCount = count() by RequestUri, HttpStatusCode\n| top 20 by ErrorCount desc\n| project RequestUri, HttpStatusCode, ErrorCount",
+              "size": 0,
+              "title": "Top Failing URLs",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "ErrorCount", "sortOrder": 2 } ] }
+            },
+            "name": "tab-b-failing-urls"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by Pop\n| top 15 by Requests desc\n| project EdgeLocation = Pop, Requests",
+              "size": 0,
+              "title": "Top Edge Locations (POP)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "Requests", "sortOrder": 2 } ] }
+            },
+            "name": "tab-b-top-locations"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabB" }
+      ],
+      "name": "group-tab-b"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Frontend App Service\nTraffic, failure modes, latency, and exceptions for the Razor Pages frontend." },
+            "name": "tab-c-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'frontend'\n| summarize Requests = count(), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Frontend — Request Rate & Failures",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Requests", "color": "blue" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-c-request-rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'frontend'\n| summarize P50 = round(percentile(duration, 50), 1), P90 = round(percentile(duration, 90), 1), P95 = round(percentile(duration, 95), 1), P99 = round(percentile(duration, 99), 1) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Frontend — Response Time Percentiles (ms)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-c-latency"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "exceptions\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'frontend'\n| summarize Count = count() by bin(timestamp, 5m), type\n| order by timestamp asc",
+              "size": 0,
+              "title": "Frontend — Exceptions Over Time",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-c-exceptions"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'frontend'\n| summarize Requests = count(), AvgMs = round(avg(duration), 1), FailRate = round(countif(success == false) * 100.0 / count(), 1) by name\n| top 15 by Requests desc\n| project Operation = name, Requests, AvgMs, FailRate",
+              "size": 0,
+              "title": "Frontend — Top Operations",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-c-top-ops"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabC" }
+      ],
+      "name": "group-tab-c"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Backend App Service (API)\nAPI traffic, failure modes, latency, and SQL dependency analysis." },
+            "name": "tab-d-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'backend'\n| summarize Requests = count(), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Backend API — Request Rate & Failures",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Requests", "color": "blue" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-d-request-rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'backend'\n| summarize P50 = round(percentile(duration, 50), 1), P90 = round(percentile(duration, 90), 1), P95 = round(percentile(duration, 95), 1), P99 = round(percentile(duration, 99), 1) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Backend API — Response Time Percentiles (ms)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-d-latency"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'backend'\n| where type == 'SQL'\n| summarize Calls = count(), AvgMs = round(avg(duration), 1), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Backend → SQL Dependency Calls",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Calls", "color": "blue" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-d-sql-deps"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'backend'\n| summarize Requests = count(), AvgMs = round(avg(duration), 1), FailRate = round(countif(success == false) * 100.0 / count(), 1) by name\n| top 15 by Requests desc\n| project Endpoint = name, Requests, AvgMs, FailRate",
+              "size": 0,
+              "title": "Backend API — Top Endpoints",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-d-top-endpoints"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabD" }
+      ],
+      "name": "group-tab-d"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Dependencies & Transaction Flow (E2E)\nEnd-to-end chain: Frontend → Backend → Database. Identify where latency and failures occur." },
+            "name": "tab-e-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| summarize Calls = count(), FailedCount = countif(success == false), AvgMs = round(avg(duration), 1), P95ms = round(percentile(duration, 95), 1) by target, type\n| extend FailPct = round(toreal(FailedCount) / toreal(Calls) * 100, 2)\n| project Target = target, Type = type, Calls, FailedCount, FailPct, AvgMs, P95ms\n| order by Calls desc",
+              "size": 0,
+              "title": "Dependency Summary",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "Calls", "sortOrder": 2 } ] }
+            },
+            "name": "tab-e-dep-summary"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### Frontend → Backend (HTTP Dependencies)" },
+            "name": "tab-e-fe-be-label"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'frontend'\n| where type == 'HTTP'\n| summarize Calls = count(), AvgMs = round(avg(duration), 1), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "FE → BE Dependency Calls",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Calls", "color": "green" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-e-fe-to-be"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### Backend → SQL (Database Dependencies)" },
+            "name": "tab-e-be-sql-label"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where cloud_RoleName has 'backend'\n| where type == 'SQL'\n| summarize Calls = count(), AvgMs = round(avg(duration), 1), Failed = countif(success == false) by bin(timestamp, 5m)\n| order by timestamp asc",
+              "size": 0,
+              "title": "BE → SQL Dependency Calls",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Calls", "color": "blue" },
+                  { "seriesName": "Failed", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-e-be-to-sql"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### Operation Drilldown\nSelect an operation to see its dependencies and linked exceptions." },
+            "name": "tab-e-drilldown-label"
+          },
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "parameters": [
+                {
+                  "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000007",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "OperationName",
+                  "label": "Operation Name",
+                  "type": 2,
+                  "isRequired": false,
+                  "query": "requests\n| where timestamp {TimeRange}\n| summarize Count = count() by name\n| order by Count desc\n| take 50\n| project value = name, label = strcat(name, ' (', Count, ')')",
+                  "crossComponentResources": [ "{AppInsights}" ],
+                  "queryType": 0,
+                  "resourceType": "microsoft.insights/components",
+                  "typeSettings": {
+                    "additionalResourceOptions": [ "value::all" ],
+                    "showDefault": true
+                  },
+                  "defaultValue": "value::all",
+                  "value": "value::all"
+                }
+              ],
+              "style": "above"
+            },
+            "name": "tab-e-operation-param"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where '*' == '{OperationName}' or name == '{OperationName}'\n| join kind=leftouter (dependencies | where timestamp {TimeRange}) on operation_Id\n| summarize ReqDuration = max(duration), DepCount = dcountif(id1, isnotempty(id1)), DepAvgMs = round(avg(duration1), 1) by operation_Id, ReqName = name, resultCode, success\n| top 50 by ReqDuration desc\n| project operation_Id, ReqName, ReqDuration = round(ReqDuration, 1), resultCode, success, DepCount, DepAvgMs",
+              "size": 0,
+              "title": "Selected Operation — Request + Child Dependencies",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-e-operation-details"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let opIds = requests\n| where timestamp {TimeRange}\n| where '*' == '{OperationName}' or name == '{OperationName}'\n| distinct operation_Id;\nexceptions\n| where timestamp {TimeRange}\n| where operation_Id in (opIds)\n| project timestamp, type, outerMessage, cloud_RoleName, operation_Id, problemId\n| order by timestamp desc\n| take 50",
+              "size": 0,
+              "title": "Exceptions Linked to Selected Operation",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-e-operation-exceptions"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabE" }
+      ],
+      "name": "group-tab-e"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Database Layer — SQL Server\nDual view: Azure SQL (PaaS) diagnostics and SQL VM (IaaS) guest OS metrics." },
+            "name": "tab-f-header"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### Azure SQL Database (PaaS) — AdventureWorksLT" },
+            "name": "tab-f-paas-label"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AzureMetrics\n| where TimeGenerated {TimeRange}\n| where ResourceProvider == 'MICROSOFT.SQL'\n| where MetricName in ('dtu_consumption_percent', 'cpu_percent', 'connection_successful', 'connection_failed')\n| summarize AvgValue = round(avg(Average), 2) by bin(TimeGenerated, 5m), MetricName\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "Azure SQL — DTU / CPU / Connections",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-f-paas-dtu"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where ResourceProvider == 'MICROSOFT.SQL'\n| where Category in ('Deadlocks', 'Blocks', 'Errors')\n| summarize Count = count() by bin(TimeGenerated, 15m), Category\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "Azure SQL — Deadlocks, Blocks & Errors",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Deadlocks", "color": "red" },
+                  { "seriesName": "Blocks", "color": "orange" },
+                  { "seriesName": "Errors", "color": "redBright" }
+                ]
+              }
+            },
+            "name": "tab-f-paas-deadlocks"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == 'QueryStoreWaitStatistics'\n| summarize TotalWaitMs = sum(todouble(total_query_wait_time_ms_d)) by bin(TimeGenerated, 15m), wait_category_s\n| top 50 by TotalWaitMs desc\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "Azure SQL — Query Wait Categories",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-f-paas-waits"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### SQL Server on VM (IaaS) — AdventureWorks2022\nGuest OS performance counters via Azure Monitor Agent (AMA)." },
+            "name": "tab-f-iaas-label"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Perf\n| where TimeGenerated {TimeRange}\n| where Computer has 'vm-sql'\n| where CounterName in ('% Processor Time', 'Available MBytes')\n| summarize AvgValue = round(avg(CounterValue), 2) by bin(TimeGenerated, 5m), CounterName\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "SQL VM — CPU & Memory",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "% Processor Time", "label": "CPU %" },
+                  { "seriesName": "Available MBytes", "label": "Free Memory (MB)" }
+                ]
+              }
+            },
+            "name": "tab-f-iaas-cpu"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Perf\n| where TimeGenerated {TimeRange}\n| where Computer has 'vm-sql'\n| where ObjectName has 'SQLServer'\n| summarize AvgValue = round(avg(CounterValue), 2) by bin(TimeGenerated, 5m), CounterName\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "SQL VM — SQL Server Performance Counters",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-f-iaas-sql-counters"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Perf\n| where TimeGenerated {TimeRange}\n| where Computer has 'vm-sql'\n| where CounterName in ('Disk Reads/sec', 'Disk Writes/sec', '% Free Space')\n| summarize AvgValue = round(avg(CounterValue), 2) by bin(TimeGenerated, 5m), CounterName\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "SQL VM — Disk I/O",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-f-iaas-disk"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Perf\n| where TimeGenerated {TimeRange}\n| where Computer has 'vm-sql'\n| where CounterName == 'Bytes Total/sec'\n| summarize AvgBytesPerSec = round(avg(CounterValue), 0) by bin(TimeGenerated, 5m)\n| extend AvgMbps = round(AvgBytesPerSec * 8 / 1000000, 2)\n| project TimeGenerated, AvgMbps\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "SQL VM — Network Throughput (Mbps)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart"
+            },
+            "name": "tab-f-iaas-network"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Event\n| where TimeGenerated {TimeRange}\n| where Computer has 'vm-sql'\n| where EventLevelName in ('Error', 'Critical')\n| summarize Count = count() by bin(TimeGenerated, 15m), EventLog, EventLevelName\n| order by TimeGenerated asc",
+              "size": 0,
+              "title": "SQL VM — Windows Event Errors",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  { "seriesName": "Error", "color": "orange" },
+                  { "seriesName": "Critical", "color": "red" }
+                ]
+              }
+            },
+            "name": "tab-f-iaas-events"
+          },
+          {
+            "type": 1,
+            "content": { "json": "### SQL from Application Perspective" },
+            "name": "tab-f-app-label"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where type == 'SQL'\n| summarize Calls = count(), AvgMs = round(avg(duration), 1), P95ms = round(percentile(duration, 95), 1), Failed = countif(success == false) by target\n| project Target = target, Calls, AvgMs, P95ms, Failed",
+              "size": 0,
+              "title": "SQL Dependencies — App-Side Latency by Target",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-f-app-sql-deps"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabF" }
+      ],
+      "name": "group-tab-f"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Availability & SLO\nService Level Indicators (SLIs) and availability from web tests and request telemetry." },
+            "name": "tab-g-header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "availabilityResults\n| where timestamp {TimeRange}\n| summarize SuccessCount = countif(success == 1), TotalCount = count() by bin(timestamp, 15m), name\n| extend AvailabilityPct = round(toreal(SuccessCount) / toreal(TotalCount) * 100, 2)\n| order by timestamp asc",
+              "size": 0,
+              "title": "Availability Test Results (%)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": { "ySettings": { "min": 0, "max": 100 } }
+            },
+            "name": "tab-g-avail-trend"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "availabilityResults\n| where timestamp {TimeRange}\n| summarize SuccessCount = countif(success == 1), TotalCount = count(), AvgDurationMs = round(avg(duration), 1) by name\n| extend AvailabilityPct = round(toreal(SuccessCount) / toreal(TotalCount) * 100, 2)\n| project TestName = name, AvailabilityPct, AvgDurationMs, TotalChecks = TotalCount, Passed = SuccessCount",
+              "size": 0,
+              "title": "Availability Summary (Target: 99.9%)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  { "columnMatch": "AvailabilityPct", "formatter": 8, "formatOptions": { "min": 95, "max": 100, "palette": "greenRed" } }
+                ]
+              }
+            },
+            "name": "tab-g-avail-summary"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| summarize Total = count(), Successful = countif(success == true) by bin(timestamp, 15m), cloud_RoleName\n| extend SuccessRate = round(toreal(Successful) / toreal(Total) * 100, 2)\n| extend Service = case(cloud_RoleName has 'frontend', 'Frontend', cloud_RoleName has 'backend', 'Backend', cloud_RoleName)\n| project timestamp, Service, SuccessRate\n| order by timestamp asc",
+              "size": 0,
+              "title": "Request Success Rate by Service (SLI)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "ySettings": { "min": 90, "max": 100 },
+                "seriesLabelSettings": [
+                  { "seriesName": "Frontend", "color": "blue" },
+                  { "seriesName": "Backend", "color": "green" }
+                ]
+              }
+            },
+            "name": "tab-g-success-rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| summarize P95ms = round(percentile(duration, 95), 0) by bin(timestamp, 15m), cloud_RoleName\n| extend Service = case(cloud_RoleName has 'frontend', 'Frontend', cloud_RoleName has 'backend', 'Backend', cloud_RoleName)\n| project timestamp, Service, P95ms\n| order by timestamp asc",
+              "size": 0,
+              "title": "P95 Latency by Service (Target: < 2000ms)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "timechart",
+              "chartSettings": {
+                "ySettings": { "min": 0 },
+                "seriesLabelSettings": [
+                  { "seriesName": "Frontend", "color": "blue" },
+                  { "seriesName": "Backend", "color": "green" }
+                ],
+                "customThresholdLine": "2000",
+                "customThresholdLineStyle": 1
+              }
+            },
+            "name": "tab-g-latency-sli"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let sloTarget = 99.9;\nlet budget = 100.0 - sloTarget;\nrequests\n| where timestamp {TimeRange}\n| summarize Total = count(), Failed = countif(success == false)\n| extend ErrorRate = round(toreal(Failed) / toreal(Total) * 100, 4)\n| extend BudgetUsedPct = round(ErrorRate / budget * 100, 2)\n| extend BudgetRemaining = round(100.0 - BudgetUsedPct, 2)\n| extend Status = iff(BudgetUsedPct <= 50, 'Healthy', iff(BudgetUsedPct <= 80, 'Caution', 'Critical'))\n| project SloTarget = strcat(sloTarget, '%'), ErrorBudget = strcat(budget, '%'), ActualErrorRate = strcat(ErrorRate, '%'), BudgetUsed = strcat(BudgetUsedPct, '%'), BudgetRemaining = strcat(BudgetRemaining, '%'), Status",
+              "size": 4,
+              "title": "Error Budget Burn",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table"
+            },
+            "name": "tab-g-error-budget"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabG" }
+      ],
+      "name": "group-tab-g"
+    },
+
+
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": 0,
+        "items": [
+          {
+            "type": 1,
+            "content": { "json": "## Investigations\nParameter-driven troubleshooting playground. Use the filters below to drill into specific failures." },
+            "name": "tab-h-header"
+          },
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "parameters": [
+                {
+                  "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000008",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "SearchText",
+                  "label": "Search Text (operation, URL, or error)",
+                  "type": 1,
+                  "isRequired": false,
+                  "value": ""
+                },
+                {
+                  "id": "1a2b3c4d-5e6f-4a1b-8c2d-100000000009",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "SeverityFilter",
+                  "label": "Min Severity",
+                  "type": 2,
+                  "isRequired": false,
+                  "jsonData": "[{\"value\":\"0\",\"label\":\"Verbose\"},{\"value\":\"1\",\"label\":\"Information\"},{\"value\":\"2\",\"label\":\"Warning\"},{\"value\":\"3\",\"label\":\"Error\"},{\"value\":\"4\",\"label\":\"Critical\"}]",
+                  "value": "2"
+                }
+              ],
+              "style": "above"
+            },
+            "name": "tab-h-params"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "requests\n| where timestamp {TimeRange}\n| where success == false\n| where isempty('{SearchText}') or name contains '{SearchText}' or url contains '{SearchText}'\n| summarize Total = count(), AvgMs = round(avg(duration), 1) by name, resultCode\n| top 25 by Total desc\n| project Operation = name, ResultCode = resultCode, FailCount = Total, AvgMs",
+              "size": 0,
+              "title": "Top Failing Requests",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "FailCount", "sortOrder": 2 } ] }
+            },
+            "name": "tab-h-failing-requests"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "exceptions\n| where timestamp {TimeRange}\n| where isempty('{SearchText}') or type contains '{SearchText}' or outerMessage contains '{SearchText}'\n| summarize Count = count() by type, problemId, cloud_RoleName\n| top 25 by Count desc\n| project ExceptionType = type, ProblemId = problemId, Service = cloud_RoleName, Count",
+              "size": 0,
+              "title": "Top Exceptions",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "Count", "sortOrder": 2 } ] }
+            },
+            "name": "tab-h-top-exceptions"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where success == false\n| where isempty('{SearchText}') or target contains '{SearchText}' or name contains '{SearchText}'\n| summarize FailCount = count(), AvgMs = round(avg(duration), 1) by target, type, resultCode\n| top 25 by FailCount desc\n| project Target = target, Type = type, ResultCode = resultCode, FailCount, AvgMs",
+              "size": 0,
+              "title": "Top Failing Dependencies",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "FailCount", "sortOrder": 2 } ] }
+            },
+            "name": "tab-h-failing-deps"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "dependencies\n| where timestamp {TimeRange}\n| where isempty('{SearchText}') or target contains '{SearchText}' or name contains '{SearchText}'\n| summarize P95ms = round(percentile(duration, 95), 1), AvgMs = round(avg(duration), 1), Calls = count() by target, type\n| top 25 by P95ms desc\n| project Target = target, Type = type, Calls, AvgMs, P95ms",
+              "size": 0,
+              "title": "Slowest Dependencies (P95)",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": { "sortBy": [ { "itemKey": "P95ms", "sortOrder": 2 } ] }
+            },
+            "name": "tab-h-slow-deps"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "traces\n| where timestamp {TimeRange}\n| where severityLevel >= toint('{SeverityFilter}')\n| where isempty('{SearchText}') or message contains '{SearchText}'\n| project timestamp, message, severityLevel, cloud_RoleName, operation_Id\n| order by timestamp desc\n| take 200",
+              "size": 0,
+              "title": "Application Traces",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [ "{AppInsights}" ],
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "severityLevel",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        { "operator": ">=", "thresholdValue": "3", "representation": "error", "text": "" },
+                        { "operator": ">=", "thresholdValue": "2", "representation": "warning", "text": "" },
+                        { "operator": "Default", "representation": "info", "text": "" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "name": "tab-h-traces"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "Event\n| where TimeGenerated {TimeRange}\n| where EventLevelName in ('Error', 'Critical', 'Warning')\n| where isempty('{SearchText}') or RenderedDescription contains '{SearchText}'\n| project TimeGenerated, Computer, EventLog, EventLevelName, RenderedDescription\n| order by TimeGenerated desc\n| take 100",
+              "size": 0,
+              "title": "Windows Event Log — Errors & Warnings (SQL VM)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [ "{LogAnalyticsWorkspace}" ],
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "EventLevelName",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        { "operator": "==", "thresholdValue": "Critical", "representation": "critical", "text": "" },
+                        { "operator": "==", "thresholdValue": "Error", "representation": "error", "text": "" },
+                        { "operator": "Default", "representation": "warning", "text": "" }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "name": "tab-h-event-log"
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        { "parameterName": "SelectedTab", "comparison": "isEqualTo", "value": "tabH" }
+      ],
+      "name": "group-tab-h"
+    }
+  ],
+  "fallbackResourceIds": [ "__APP_INSIGHTS_ID__" ]
+}

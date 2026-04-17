@@ -2,6 +2,7 @@
 *.json
 !bicepconfig.json
 !appsettings*.json
+!modules/workbook-v2.json
 
 # Environment files
 .env
