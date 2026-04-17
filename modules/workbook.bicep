@@ -82,8 +82,10 @@ var serializedWorkbook = string({
             type: 6
             isRequired: true
             multiSelect: false
-            query: 'summarize by subscriptionId\n| project value = strcat("/subscriptions/", subscriptionId), label = subscriptionId'
-            crossComponentResources: [ '{Subscription}' ]
+            query: 'summarize by subscriptionId\n| project value = strcat("/subscriptions/", subscriptionId), label = subscriptionId, selected = true'
+            crossComponentResources: [ 'value::all' ]
+            queryType: 1
+            resourceType: 'microsoft.resourcegraph/resources'
             value: ''
           }
           {
@@ -93,9 +95,10 @@ var serializedWorkbook = string({
             label: 'Application Insights'
             type: 5
             isRequired: true
-            query: 'where type == "microsoft.insights/components"\n| project value = id, label = name'
+            query: 'resources\n| where type == "microsoft.insights/components"\n| project value = id, label = name, selected = id =~ "${appInsightsId}"'
             crossComponentResources: [ '{Subscription}' ]
-            typeSettings: { resourceTypeFilter: { microsoft_insights_components: true } }
+            queryType: 1
+            resourceType: 'microsoft.resourcegraph/resources'
             value: appInsightsId
           }
           {
@@ -105,9 +108,10 @@ var serializedWorkbook = string({
             label: 'Log Analytics Workspace'
             type: 5
             isRequired: true
-            query: 'where type == "microsoft.operationalinsights/workspaces"\n| project value = id, label = name'
+            query: 'resources\n| where type == "microsoft.operationalinsights/workspaces"\n| project value = id, label = name, selected = id =~ "${logAnalyticsWorkspaceId}"'
             crossComponentResources: [ '{Subscription}' ]
-            typeSettings: { resourceTypeFilter: { microsoft_operationalinsights_workspaces: true } }
+            queryType: 1
+            resourceType: 'microsoft.resourcegraph/resources'
             value: logAnalyticsWorkspaceId
           }
           {
@@ -117,9 +121,10 @@ var serializedWorkbook = string({
             label: 'Front Door Profile'
             type: 5
             isRequired: false
-            query: 'where type == "microsoft.cdn/profiles"\n| project value = id, label = name'
+            query: 'resources\n| where type == "microsoft.cdn/profiles"\n| project value = id, label = name, selected = id =~ "${frontDoorProfileId}"'
             crossComponentResources: [ '{Subscription}' ]
-            typeSettings: { resourceTypeFilter: { microsoft_cdn_profiles: true } }
+            queryType: 1
+            resourceType: 'microsoft.resourcegraph/resources'
             value: frontDoorProfileId
           }
         ]
