@@ -45,7 +45,7 @@ param environment string = 'dev'
 param appServicePlanSku string = 'S1'
 
 @description('Administrator login for Azure SQL Database (PaaS). Required only when sqlAuthMode is "sqlAndEntra".')
-param sqlAdminLogin string = ''
+param sqlAdminLogin string = 'sqladminuser'
 
 @secure()
 @description('Administrator password for Azure SQL Database (PaaS). Required only when sqlAuthMode is "sqlAndEntra".')
@@ -84,7 +84,7 @@ param vmSize string = 'Standard_D2s_v5'
 
 // -- Observability Settings --
 @description('Log Analytics workspace retention in days.')
-param logRetentionDays int = 30
+param logRetentionDays int = 90
 
 @description('Application Insights data retention in days.')
 param appInsightsRetentionDays int = 90

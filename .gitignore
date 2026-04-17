@@ -22,6 +22,12 @@ Thumbs.db
 *.tfstate
 *.tfstate.backup
 
+# Certificates and private keys
+*.pem
+*.pfx
+*.key
+*.p12
+
 # .NET build artifacts
 bin/
 obj/

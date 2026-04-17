@@ -12,7 +12,7 @@ param location string
 param workspaceName string
 
 @description('Data retention in days.')
-param retentionInDays int = 30
+param retentionInDays int = 90
 
 @description('Log Analytics pricing SKU.')
 param skuName string = 'PerGB2018'

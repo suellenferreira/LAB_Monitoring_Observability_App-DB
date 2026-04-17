@@ -75,6 +75,7 @@ jobs:
           SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
           echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "::add-mask::$SP_CLIENT_ID"
           echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
@@ -152,6 +153,7 @@ jobs:
           SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
           echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "::add-mask::$SP_CLIENT_ID"
           echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
@@ -224,6 +226,7 @@ jobs:
           SP_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')
           SP_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')
           echo "::add-mask::$SP_CLIENT_SECRET"
+          echo "::add-mask::$SP_CLIENT_ID"
           echo "SP_CLIENT_ID=$SP_CLIENT_ID" >> $GITHUB_ENV
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 

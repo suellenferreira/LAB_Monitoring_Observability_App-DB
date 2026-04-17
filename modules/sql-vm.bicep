@@ -33,10 +33,10 @@ param nameSuffix string
 param logAnalyticsWorkspaceId string
 
 @description('VNet address space CIDR.')
-param vnetAddressPrefix string = '10.0.0.0/16'
+param vnetAddressPrefix string = '10.100.0.0/16'
 
 @description('SQL subnet CIDR.')
-param subnetAddressPrefix string = '10.0.1.0/24'
+param subnetAddressPrefix string = '10.100.1.0/24'
 
 @description('SQL Server VM image publisher.')
 param vmImagePublisher string = 'MicrosoftSQLServer'
