@@ -47,6 +47,7 @@ Azure demo environment showcasing end-to-end observability across a full-stack a
 | **Availability Tests** | Proactive uptime monitoring | URL ping tests from 5 global locations (Frontend + Backend API) |
 | **Azure Monitor Workbook** | E2E observability dashboard | 8-tab workbook: Edge → App → Dependencies → DB → SLO → Investigations |
 | **Azure Monitor Alerts** *(optional)* | Proactive alert rules | 4 log alerts (App Insights KQL) + 2 metric alerts (App Service 5xx) + Action Group |
+| **Azure Managed Grafana** *(optional)* | Grafana dashboard | 18-panel dashboard mirroring the workbook (Essential ~$36/mo, Standard ~$130/mo) |
 
 ## Prerequisites
 
@@ -205,7 +206,9 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── availability-tests.bicep    # Standard URL ping tests (Frontend + Backend)
 │   ├── workbook-v2.bicep       # E2E Observability Workbook (Bicep wrapper)
 │   ├── workbook-v2.json        # Workbook definition (raw JSON, 8 tabs)
-│   └── alerts-demo.bicep       # Azure Monitor Alerts (Action Group + Log/Metric alerts)
+│   ├── alerts-demo.bicep       # Azure Monitor Alerts (Action Group + Log/Metric alerts)
+│   ├── grafana.bicep           # Azure Managed Grafana (optional, incurs cost)
+│   └── grafana-dashboard.json  # Grafana dashboard definition (18 panels, 8 rows)
 ├── src/
 │   ├── backend/                # ASP.NET Core 8 Web API (PaaS + IaaS)
 │   │   ├── BackendApi.csproj
@@ -394,6 +397,52 @@ All alerts route to a single Action Group (`ag-alerts-<prefix>-<env>`) with one 
 - **Azure Portal** → **Monitor** → **Alerts** to see fired alerts
 - **Azure Portal** → **Monitor** → **Alert rules** to manage rule definitions
 - Log alert KQL queries can also be copied into Workbooks or Log Analytics (see comments in `modules/alerts-demo.bicep`)
+
+## Azure Managed Grafana Dashboard (Optional)
+
+The lab includes an optional **Azure Managed Grafana** dashboard that mirrors the Azure Monitor Workbook v2, providing an alternative visualization experience with Grafana's rich panel ecosystem.
+
+> **Why not Azure Portal Dashboard (native)?** The native Azure Portal Dashboard only supports pinned metric charts and basic Log Analytics query tiles. It cannot render KQL-driven panels with custom visualizations, row-based collapsible layouts, or the full set of chart types (gauge, stat, timeseries, table) required to replicate the 8-tab observability report. Grafana's Azure Monitor data source plugin provides full KQL query support with rich panel options.
+
+### Cost Warning
+
+| Tier | Approximate Cost | Grafana Alerting | Enterprise Plugins |
+|------|-----------------|------------------|-------------------|
+| **Essential** | ~$0.05/hr (~$36/month) | No | No |
+| **Standard** | ~$0.18/hr (~$130/month) | Yes | Yes |
+
+> **There is no free tier** for Azure Managed Grafana. Delete the resource when no longer needed to stop charges.
+
+### Enabling Grafana
+
+1. Set `DEPLOY_GRAFANA=true` in `deploy-config.cfg`
+2. Optionally change `GRAFANA_SKU=Standard` (default: `Essential`)
+3. Push to trigger deployment
+
+The pipeline will:
+1. Deploy the Grafana instance via Bicep
+2. Assign `Monitoring Reader` role to the Grafana managed identity
+3. Assign `Grafana Admin` role to the deployment SP
+4. Import the 18-panel dashboard with resolved resource IDs
+
+### Dashboard Panels (18 panels, 8 rows)
+
+| Row | Section | Panels |
+|-----|---------|--------|
+| A | E2E Overview | Total Requests (stat), Failure Rate % (gauge), Avg Response Time (stat), Dependency Failures (stat) |
+| B | Edge: Front Door | Request Trend (timeseries), 4xx/5xx Error Rate (timeseries) |
+| C | Frontend | Requests & Failures (timeseries), Response Time P50/P90/P95 (timeseries) |
+| D | Backend API | Requests & Failures (timeseries), Response Time P50/P90/P95 (timeseries) |
+| E | Dependencies | Dependency Calls by Type (timeseries), SQL Dependency Latency (timeseries) |
+| F | Database | SQL PaaS DTU % (timeseries), VM CPU & Memory (timeseries) |
+| G | Availability / SLO | Test Results by Name (timeseries), Overall SLI (gauge) |
+| H | Investigations | Recent Exceptions (table), Failed Requests (table) |
+
+### Accessing Grafana
+
+After deployment, the Grafana URL is printed in the pipeline output. You can also find it:
+- **Azure Portal** → **Resource Group** → `grafana-<prefix>-<env>` → **Overview** → **Endpoint**
+- Or via CLI: `az grafana show -g <rg> -n grafana-<prefix>-<env> --query properties.endpoint -o tsv`
 
 ## Observability Features by Layer
 

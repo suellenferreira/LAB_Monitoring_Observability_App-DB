@@ -124,6 +124,8 @@ jobs:
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
+            deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
+            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
           deploymentMode: Validate
 
   what-if:
@@ -193,6 +195,8 @@ jobs:
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
+            deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
+            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
           additionalArguments: --what-if
 
   deploy:
@@ -320,8 +324,52 @@ jobs:
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
+            deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
+            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false
+
+      # ── Import Grafana Dashboard (optional) ──
+
+      - name: Import Grafana Dashboard
+        if: env.DEPLOY_GRAFANA == 'true'
+        run: |
+          GRAFANA_NAME="grafana-${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}"
+
+          # Assign Grafana Admin role to deployment SP for dashboard management
+          GRAFANA_ID=$(az grafana show -g ${{ env.RESOURCE_GROUP }} -n $GRAFANA_NAME --query id -o tsv)
+          az role assignment create \
+            --assignee "${{ env.SP_CLIENT_ID }}" \
+            --role "Grafana Admin" \
+            --scope "$GRAFANA_ID" 2>/dev/null || true
+
+          # Get resource IDs for dashboard query placeholders
+          APP_INSIGHTS_ID=$(az resource list -g ${{ env.RESOURCE_GROUP }} \
+            --resource-type Microsoft.Insights/components --query "[0].id" -o tsv)
+          LAW_ID=$(az resource list -g ${{ env.RESOURCE_GROUP }} \
+            --resource-type Microsoft.OperationalInsights/workspaces --query "[0].id" -o tsv)
+
+          # Replace placeholders in dashboard JSON
+          sed -e "s|__APP_INSIGHTS_ID__|$APP_INSIGHTS_ID|g" \
+              -e "s|__LAW_ID__|$LAW_ID|g" \
+              -e "s|__NAME_SUFFIX__|${{ env.PROJECT_PREFIX }}-${{ env.ENVIRONMENT }}|g" \
+              modules/grafana-dashboard.json > /tmp/grafana-dashboard-resolved.json
+
+          # Import dashboard with retry (role propagation may take up to 60s)
+          for attempt in 1 2 3; do
+            if az grafana dashboard create \
+              -g ${{ env.RESOURCE_GROUP }} \
+              -n $GRAFANA_NAME \
+              --definition @/tmp/grafana-dashboard-resolved.json \
+              --overwrite 2>/dev/null; then
+              echo "Grafana dashboard imported successfully"
+              GRAFANA_URL=$(az grafana show -g ${{ env.RESOURCE_GROUP }} -n $GRAFANA_NAME --query properties.endpoint -o tsv)
+              echo "Grafana URL: ${GRAFANA_URL}"
+              break
+            fi
+            echo "Attempt $attempt failed (role propagation), retrying in 30s..."
+            sleep 30
+          done
 
       # ── Build & Deploy .NET Applications ──
 

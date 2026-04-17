@@ -3,6 +3,7 @@
 !bicepconfig.json
 !appsettings*.json
 !modules/workbook-v2.json
+!modules/grafana-dashboard.json
 
 # Environment files
 .env

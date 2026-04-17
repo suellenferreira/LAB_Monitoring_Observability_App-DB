@@ -125,6 +125,20 @@ param deployAlerts bool = false
 @description('Email address for alert notifications. Required when deployAlerts is true.')
 param alertEmailAddress string = ''
 
+// -- Grafana (Optional) --
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║ COST DISCLAIMER: Azure Managed Grafana has NO free tier.           ║
+// ║   Essential: ~$0.05/hr (~$36/month)                                ║
+// ║   Standard:  ~$0.18/hr (~$130/month)                               ║
+// ║ Delete the Grafana resource when no longer needed to stop charges. ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+@description('Deploy Azure Managed Grafana dashboard. Set to true to enable (incurs cost, no free tier).')
+param deployGrafana bool = false
+
+@description('Azure Managed Grafana pricing tier.')
+@allowed(['Essential', 'Standard'])
+param grafanaSku string = 'Essential'
+
 // -- Variables --
 var nameSuffix = '${projectPrefix}-${environment}'
 var sqlServerName = 'sql-${nameSuffix}'
@@ -324,6 +338,25 @@ module alerts 'modules/alerts-demo.bicep' = if (deployAlerts) {
     frontendAppServiceResourceId: frontendApp.outputs.appId
     backendAppServiceResourceId: backendApp.outputs.appId
     sqlServerVmResourceId: sqlVm.outputs.vmId
+  }
+}
+
+// ============================================================================
+// MODULE: Azure Managed Grafana (Optional)
+// Demonstrates: Grafana-based observability dashboard as an alternative to
+// Azure Monitor Workbooks. Uses the Azure Monitor data source plugin to
+// query Application Insights and Log Analytics with KQL.
+// NOTE: Azure Portal Dashboard (native) was not used because it only supports
+// pinned metric charts and basic Log Analytics tiles — it cannot render
+// KQL-driven panels, row-based layouts, or the full set of visualizations
+// required by this lab's 8-tab observability report.
+// Controlled by the deployGrafana parameter (default: false).
+// ============================================================================
+module grafana 'modules/grafana.bicep' = if (deployGrafana) {
+  params: {
+    location: location
+    grafanaName: 'grafana-${nameSuffix}'
+    skuName: grafanaSku
   }
 }
 

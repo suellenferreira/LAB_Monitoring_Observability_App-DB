@@ -1,0 +1,370 @@
+{
+  "uid": "e2e-observability-lab",
+  "title": "E2E Observability — __NAME_SUFFIX__",
+  "description": "Azure Managed Grafana dashboard mirroring the Azure Monitor Workbook v2. Queries Application Insights and Log Analytics via the Azure Monitor data source.",
+  "tags": ["azure", "monitoring", "observability", "lab"],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5m",
+  "time": { "from": "now-24h", "to": "now" },
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource",
+        "current": {},
+        "hide": 2
+      }
+    ]
+  },
+  "panels": [
+
+    {
+      "id": 100, "type": "row",
+      "title": "A — E2E Overview",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 1, "type": "stat",
+      "title": "Total Requests",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| summarize TotalRequests=count()",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 2, "type": "gauge",
+      "title": "Failure Rate %",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 2 }, { "color": "red", "value": 5 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| summarize Total=count(), Failed=countif(success == false)\n| extend FailureRate=round(Failed * 100.0 / Total, 2)\n| project FailureRate",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 3, "type": "stat",
+      "title": "Avg Response Time",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "ms", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 2000 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| summarize AvgDuration=round(avg(duration), 0)\n| project AvgDuration",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 4, "type": "stat",
+      "title": "Dependency Failures",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "dependencies\n| where $__timeFilter(timestamp)\n| where success == false\n| summarize FailedDeps=count()",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 101, "type": "row",
+      "title": "B — Edge: Azure Front Door",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "collapsed": false
+    },
+    {
+      "id": 5, "type": "timeseries",
+      "title": "Front Door Request Trend",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where $__timeFilter(TimeGenerated)\n| summarize Requests=count() by bin(TimeGenerated, $__interval)\n| order by TimeGenerated asc",
+          "resources": ["__LAW_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 6, "type": "timeseries",
+      "title": "Front Door 4xx / 5xx Error Rate (%)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "percent", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [{ "matcher": { "id": "byName", "options": "Pct4xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "Pct5xx" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where $__timeFilter(TimeGenerated)\n| extend HttpStatus = toint(httpStatusCode_d)\n| summarize Total=count(), Err4xx=countif(HttpStatus >= 400 and HttpStatus < 500), Err5xx=countif(HttpStatus >= 500) by bin(TimeGenerated, $__interval)\n| extend Pct4xx=round(toreal(Err4xx)/toreal(Total)*100, 2), Pct5xx=round(toreal(Err5xx)/toreal(Total)*100, 2)\n| project TimeGenerated, Pct4xx, Pct5xx\n| order by TimeGenerated asc",
+          "resources": ["__LAW_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 102, "type": "row",
+      "title": "C — Frontend App Service",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false
+    },
+    {
+      "id": 7, "type": "timeseries",
+      "title": "Frontend Requests & Failures",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [{ "matcher": { "id": "byName", "options": "Failed" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| where cloud_RoleName has 'frontend'\n| summarize Total=count(), Failed=countif(success == false) by bin(timestamp, $__interval)\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 8, "type": "timeseries",
+      "title": "Frontend Response Time Percentiles (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [{ "matcher": { "id": "byName", "options": "P50" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P90" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P95" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| where cloud_RoleName has 'frontend'\n| summarize P50=round(percentile(duration, 50), 1), P90=round(percentile(duration, 90), 1), P95=round(percentile(duration, 95), 1) by bin(timestamp, $__interval)\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 103, "type": "row",
+      "title": "D — Backend API",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "collapsed": false
+    },
+    {
+      "id": 9, "type": "timeseries",
+      "title": "Backend Requests & Failures",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [{ "matcher": { "id": "byName", "options": "Failed" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| where cloud_RoleName has 'backend'\n| summarize Total=count(), Failed=countif(success == false) by bin(timestamp, $__interval)\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 10, "type": "timeseries",
+      "title": "Backend Response Time Percentiles (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [{ "matcher": { "id": "byName", "options": "P50" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P90" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P95" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| where cloud_RoleName has 'backend'\n| summarize P50=round(percentile(duration, 50), 1), P90=round(percentile(duration, 90), 1), P95=round(percentile(duration, 95), 1) by bin(timestamp, $__interval)\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 104, "type": "row",
+      "title": "E — Dependencies & Flow",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "collapsed": false
+    },
+    {
+      "id": 11, "type": "timeseries",
+      "title": "Dependency Calls by Type",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "dependencies\n| where $__timeFilter(timestamp)\n| summarize Calls=count() by bin(timestamp, $__interval), type\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 12, "type": "timeseries",
+      "title": "SQL Dependency Avg Latency (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "dependencies\n| where $__timeFilter(timestamp)\n| where type == 'SQL'\n| summarize AvgMs=round(avg(duration), 1) by bin(timestamp, $__interval), target\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 105, "type": "row",
+      "title": "F — Database (SQL PaaS + IaaS VM)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
+      "collapsed": false
+    },
+    {
+      "id": 13, "type": "timeseries",
+      "title": "SQL PaaS — DTU Consumption %",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "AzureMetrics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == 'MICROSOFT.SQL'\n| where MetricName == 'dtu_consumption_percent'\n| summarize AvgDTU=round(avg(Average), 2) by bin(TimeGenerated, $__interval)\n| order by TimeGenerated asc",
+          "resources": ["__LAW_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 14, "type": "timeseries",
+      "title": "SQL VM — CPU & Memory",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "Perf\n| where $__timeFilter(TimeGenerated)\n| where (ObjectName == 'Processor' and CounterName == '% Processor Time' and InstanceName == '_Total')\n    or (ObjectName == 'Memory' and CounterName == 'Available MBytes')\n| summarize AvgValue=round(avg(CounterValue), 2) by bin(TimeGenerated, $__interval), CounterName\n| order by TimeGenerated asc",
+          "resources": ["__LAW_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 106, "type": "row",
+      "title": "G — Availability / SLO",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
+      "collapsed": false
+    },
+    {
+      "id": 15, "type": "timeseries",
+      "title": "Availability Test Results by Name",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 52 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "availabilityResults\n| where $__timeFilter(timestamp)\n| summarize SuccessRate=round(countif(success == 1) * 100.0 / count(), 2) by bin(timestamp, $__interval), name\n| order by timestamp asc",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 16, "type": "gauge",
+      "title": "Overall Availability SLI",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 52 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "availabilityResults\n| where $__timeFilter(timestamp)\n| summarize SuccessRate=round(countif(success == 1) * 100.0 / count(), 2)\n| project SuccessRate",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+
+    {
+      "id": 107, "type": "row",
+      "title": "H — Investigations",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 60 },
+      "collapsed": false
+    },
+    {
+      "id": 17, "type": "table",
+      "title": "Recent Exceptions",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 61 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "timestamp", "desc": true }] },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "exceptions\n| where $__timeFilter(timestamp)\n| project timestamp, problemId, outerMessage, cloud_RoleName, severityLevel\n| order by timestamp desc\n| take 50",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    },
+    {
+      "id": 18, "type": "table",
+      "title": "Recent Failed Requests",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 69 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "timestamp", "desc": true }] },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+        "queryType": "Azure Log Analytics",
+        "azureLogAnalytics": {
+          "query": "requests\n| where $__timeFilter(timestamp)\n| where success == false\n| project timestamp, name, resultCode, duration, cloud_RoleName, url\n| order by timestamp desc\n| take 50",
+          "resources": ["__APP_INSIGHTS_ID__"]
+        }
+      }]
+    }
+  ]
+}

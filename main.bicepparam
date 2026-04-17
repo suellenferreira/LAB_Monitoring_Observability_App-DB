@@ -57,6 +57,13 @@ param deployAlerts = false
 param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
 
 // ===========================================================================
+// Grafana (Optional — incurs cost, no free tier)
+// ===========================================================================
+// Essential: ~$36/month | Standard: ~$130/month
+param deployGrafana = false
+param grafanaSku = 'Essential'
+
+// ===========================================================================
 // Observability Settings
 // ===========================================================================
 param logRetentionDays = 90
