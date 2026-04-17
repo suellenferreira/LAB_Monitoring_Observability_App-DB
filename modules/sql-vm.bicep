@@ -48,7 +48,7 @@ param vmImageOffer string = 'sql2022-ws2022'
 param vmImageSku string = 'sqldev-gen2'
 
 @description('OS disk storage account type.')
-param osDiskStorageType string = 'StandardSSD_LRS'
+param osDiskStorageType string = 'Standard_LRS'
 
 // -- Networking --
 resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
