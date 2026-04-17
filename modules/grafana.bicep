@@ -33,6 +33,9 @@ param grafanaName string
 @allowed(['X1', 'X2'])
 param skuSize string = 'X1'
 
+@description('Object ID of the user or group to assign the Grafana Admin role. Leave empty to skip.')
+param grafanaAdminPrincipalId string = ''
+
 // -- Grafana Instance --
 resource grafana 'Microsoft.Dashboard/grafana@2025-08-01' = {
   name: grafanaName
@@ -64,6 +67,21 @@ resource monitoringReaderAssignment 'Microsoft.Authorization/roleAssignments@202
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', monitoringReaderRoleId)
     principalId: grafana.identity.principalId
     principalType: 'ServicePrincipal'
+  }
+}
+
+// -- Role Assignment: Grafana Admin --
+// Grants a user or group Grafana Admin access to the Grafana instance.
+// Without this, users see "No Grafana Role Assigned" and cannot access the UI.
+var grafanaAdminRoleId = '22926164-76b3-42b6-b3d6-c81df6c22f04'
+
+resource grafanaAdminAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(grafanaAdminPrincipalId)) {
+  name: guid(grafana.id, grafanaAdminRoleId, grafanaAdminPrincipalId)
+  scope: grafana
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', grafanaAdminRoleId)
+    principalId: grafanaAdminPrincipalId
+    principalType: 'User'
   }
 }
 

@@ -64,3 +64,5 @@ param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
 //   https://azure.microsoft.com/pricing/details/managed-grafana/
 param deployGrafana = false
 param grafanaSkuSize = 'X1'
+// Get your Object ID: az ad signed-in-user show --query id -o tsv
+param grafanaAdminPrincipalId = '536e6df3-d14c-452b-af83-ae1c1b05f6ae'

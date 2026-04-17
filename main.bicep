@@ -146,6 +146,9 @@ param deployGrafana bool = false
 @allowed(['X1', 'X2'])
 param grafanaSkuSize string = 'X1'
 
+@description('Object ID of the user or group to assign Grafana Admin. Required for UI access. Get with: az ad signed-in-user show --query id -o tsv')
+param grafanaAdminPrincipalId string = ''
+
 // -- Variables --
 var nameSuffix = '${projectPrefix}-${environment}'
 var sqlServerName = 'sql-${nameSuffix}'
@@ -364,6 +367,7 @@ module grafana 'modules/grafana.bicep' = if (deployGrafana) {
     location: location
     grafanaName: 'grafana-${nameSuffix}'
     skuSize: grafanaSkuSize
+    grafanaAdminPrincipalId: grafanaAdminPrincipalId
   }
 }
 
