@@ -44,6 +44,19 @@ param vnetAddressPrefix = '10.100.0.0/16'
 param subnetAddressPrefix = '10.100.1.0/24'
 
 // ===========================================================================
+// Observability
+// ===========================================================================
+param logRetentionDays = 90
+param appInsightsRetentionDays = 90
+
+// ===========================================================================
+// Alerts (Optional)
+// ===========================================================================
+// Set to true to deploy Azure Monitor alert rules
+param deployAlerts = false
+param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
+
+// ===========================================================================
 // Observability Settings
 // ===========================================================================
 param logRetentionDays = 90

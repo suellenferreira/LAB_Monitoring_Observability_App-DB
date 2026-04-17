@@ -46,6 +46,7 @@ Azure demo environment showcasing end-to-end observability across a full-stack a
 | **Azure Front Door** | Global load balancer | Access logs, health probes, WAF logs, latency metrics |
 | **Availability Tests** | Proactive uptime monitoring | URL ping tests from 5 global locations (Frontend + Backend API) |
 | **Azure Monitor Workbook** | E2E observability dashboard | 8-tab workbook: Edge → App → Dependencies → DB → SLO → Investigations |
+| **Azure Monitor Alerts** *(optional)* | Proactive alert rules | 4 log alerts (App Insights KQL) + 2 metric alerts (App Service 5xx) + Action Group |
 
 ## Prerequisites
 
@@ -99,6 +100,7 @@ Go to **GitHub repo > Settings > Secrets and variables > Actions > New repositor
 | `SQL_AUTH_MODE` | `entraOnly` (default) or `sqlAndEntra` | No |
 | `SQL_ADMIN_LOGIN` | Custom SQL admin username (default: `sqladminuser`) | No |
 | `VM_ADMIN_USERNAME` | Custom VM admin username (default: `vmadminuser`) | No |
+| `ALERT_EMAIL_ADDRESS` | Email address for alert notifications | Only if `DEPLOY_ALERTS=true` |
 
 > To find your Entra ID object ID and UPN, run:
 > ```bash
@@ -202,7 +204,8 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── front-door.bicep        # Azure Front Door + diagnostics
 │   ├── availability-tests.bicep    # Standard URL ping tests (Frontend + Backend)
 │   ├── workbook-v2.bicep       # E2E Observability Workbook (Bicep wrapper)
-│   └── workbook-v2.json        # Workbook definition (raw JSON, 8 tabs)
+│   ├── workbook-v2.json        # Workbook definition (raw JSON, 8 tabs)
+│   └── alerts-demo.bicep       # Azure Monitor Alerts (Action Group + Log/Metric alerts)
 ├── src/
 │   ├── backend/                # ASP.NET Core 8 Web API (PaaS + IaaS)
 │   │   ├── BackendApi.csproj
@@ -360,6 +363,37 @@ Two standard URL ping tests are deployed, running every 5 minutes from 5 global 
 | **Backend API Health** | `https://app-backend-<prefix>-<env>.azurewebsites.net/api/health` | HTTP 200 + response contains "healthy" + valid SSL |
 
 Results appear in the **Availability / SLO** tab (Tab G) of the workbook and in Application Insights → Availability.
+
+## Azure Monitor Alerts (Optional)
+
+The lab includes an optional set of **Azure Monitor alert rules** that demonstrate both log-based and metric-based alerting. Alerts are **disabled by default** — enable them by setting `DEPLOY_ALERTS=true` in `deploy-config.cfg`.
+
+### Enabling Alerts
+
+1. Set `DEPLOY_ALERTS=true` in `deploy-config.cfg`
+2. Add the `ALERT_EMAIL_ADDRESS` secret in GitHub (or set as environment variable for local deployments)
+3. Push to trigger deployment
+
+### Alert Rules
+
+| # | Name | Type | Severity | Condition | Frequency / Window |
+|---|------|------|----------|-----------|-------------------|
+| 1 | **App-ErrorRate-High** | Log (KQL) | Sev2 | Failure rate > 5% (min 20 requests) | PT1M / PT5M |
+| 2 | **App-Latency-Avg-High** | Log (KQL) | Sev3 | Avg request duration > 2000 ms | PT1M / PT5M |
+| 3 | **Dependency-SQL-Latency-High** | Log (KQL) | Sev2 | Avg SQL dependency duration > 1500 ms (by target) | PT1M / PT5M |
+| 4 | **Dependency-SQL-FailureRate-High** | Log (KQL) | Sev2 | SQL dependency failure rate > 2% (by target, min 20 calls) | PT1M / PT5M |
+| 5 | **FE-Http5xx-High** | Metric | Sev2 | Frontend App Service HTTP 5xx > 5 (total) | PT1M / PT5M |
+| 6 | **BE-Http5xx-High** | Metric | Sev2 | Backend App Service HTTP 5xx > 5 (total) | PT1M / PT5M |
+
+### Action Group
+
+All alerts route to a single Action Group (`ag-alerts-<prefix>-<env>`) with one email receiver. The email address is configured via the `ALERT_EMAIL_ADDRESS` secret.
+
+### Viewing Alerts
+
+- **Azure Portal** → **Monitor** → **Alerts** to see fired alerts
+- **Azure Portal** → **Monitor** → **Alert rules** to manage rule definitions
+- Log alert KQL queries can also be copied into Workbooks or Log Analytics (see comments in `modules/alerts-demo.bicep`)
 
 ## Observability Features by Layer
 

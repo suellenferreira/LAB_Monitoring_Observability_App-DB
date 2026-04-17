@@ -122,6 +122,8 @@ jobs:
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
+            deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
+            alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
           deploymentMode: Validate
 
   what-if:
@@ -189,6 +191,8 @@ jobs:
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
+            deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
+            alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
           additionalArguments: --what-if
 
   deploy:
@@ -314,6 +318,8 @@ jobs:
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
+            deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
+            alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false
 

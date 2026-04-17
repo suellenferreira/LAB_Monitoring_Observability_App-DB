@@ -118,6 +118,13 @@ param vnetAddressPrefix string = '10.100.0.0/16'
 @description('SQL subnet CIDR within the VNet.')
 param subnetAddressPrefix string = '10.100.1.0/24'
 
+// -- Alerts (Optional) --
+@description('Deploy Azure Monitor alert rules (Action Group + Log/Metric alerts). Set to true to enable.')
+param deployAlerts bool = false
+
+@description('Email address for alert notifications. Required when deployAlerts is true.')
+param alertEmailAddress string = ''
+
 // -- Variables --
 var nameSuffix = '${projectPrefix}-${environment}'
 var sqlServerName = 'sql-${nameSuffix}'
@@ -298,6 +305,25 @@ module workbook 'modules/workbook-v2.bicep' = {
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
     appInsightsId: appInsights.outputs.appInsightsId
     frontDoorProfileId: frontDoor.outputs.frontDoorProfileId
+  }
+}
+
+// ============================================================================
+// MODULE: Azure Monitor Alerts (Optional)
+// Demonstrates: Alert rules using log queries (Application Insights) and
+// metric signals (App Service). Includes an Action Group with email receiver.
+// Controlled by the deployAlerts parameter (default: false).
+// ============================================================================
+module alerts 'modules/alerts-demo.bicep' = if (deployAlerts) {
+  params: {
+    location: location
+    nameSuffix: nameSuffix
+    emailReceiverAddress: alertEmailAddress
+    appInsightsResourceId: appInsights.outputs.appInsightsId
+    logAnalyticsWorkspaceResourceId: logAnalytics.outputs.workspaceId
+    frontendAppServiceResourceId: frontendApp.outputs.appId
+    backendAppServiceResourceId: backendApp.outputs.appId
+    sqlServerVmResourceId: sqlVm.outputs.vmId
   }
 }
 
