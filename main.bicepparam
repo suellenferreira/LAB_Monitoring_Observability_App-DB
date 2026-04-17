@@ -35,7 +35,7 @@ param vmAdminPassword = readEnvironmentVariable('VM_ADMIN_PASSWORD', '')
 param vmSize = 'Standard_D2s_v5'
 param vmImageOffer = 'sql2022-ws2022'
 param vmImageSku = 'sqldev-gen2'
-param osDiskStorageType = 'StandardSSD_LRS'
+param osDiskStorageType = 'Standard_LRS'
 
 // ===========================================================================
 // Networking

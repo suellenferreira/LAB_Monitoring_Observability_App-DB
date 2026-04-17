@@ -109,7 +109,7 @@ param vmImageOffer string = 'sql2022-ws2022'
 param vmImageSku string = 'sqldev-gen2'
 
 @description('OS disk storage account type for the SQL VM.')
-param osDiskStorageType string = 'StandardSSD_LRS'
+param osDiskStorageType string = 'Standard_LRS'
 
 // -- Networking --
 @description('VNet address space CIDR for the SQL VM network.')
