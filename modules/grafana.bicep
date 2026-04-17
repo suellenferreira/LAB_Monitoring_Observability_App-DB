@@ -45,7 +45,7 @@ resource grafana 'Microsoft.Dashboard/grafana@2025-08-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    grafanaMajorVersion: '10'
+    grafanaMajorVersion: '11'
     publicNetworkAccess: 'Enabled'
     zoneRedundancy: 'Disabled'
     apiKey: 'Disabled'
