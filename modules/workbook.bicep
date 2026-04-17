@@ -6,11 +6,11 @@
 //
 // Data sources:
 //   - Azure Monitor Metrics (AzureMetrics table)
-//   - Azure Monitor Logs / Log Analytics (AzureDiagnostics, Perf, Event)
+//   - Azure Monitor Logs / Log Analytics (Perf, Event, AzureMetrics)
+//   - Front Door resource-specific tables (CDNAccessLog, CDNHealthProbeLog)
+//   - SQL diagnostics (AzureDiagnostics — SQL not yet on resource-specific tables)
 //   - Application Insights (requests, dependencies, exceptions, traces,
 //     availabilityResults, performanceCounters)
-//   - Front Door diagnostic logs (FrontDoorAccessLog, FrontDoorHealthProbeLog)
-//   - SQL diagnostics (SQLInsights, QueryStoreRuntimeStatistics, etc.)
 //   - VM guest OS via AMA/DCR (Perf counters, Windows Event Logs)
 
 @description('Azure region.')
@@ -199,7 +199,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'let frontdoorReqs = AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorAccessLog"\n| summarize FD_Total=count(), FD_Errors=countif(toint(httpStatusCode_s) >= 500)\n| extend FD_Health = iff(FD_Errors == 0, "✅ Healthy", strcat("⚠️ ", FD_Errors, " errors"));\nlet feRequests = requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has "frontend"\n| summarize FE_Total=count(), FE_Failed=countif(success == false), FE_AvgDuration=avg(duration)\n| extend FE_Health = iff(FE_Failed == 0, "✅ Healthy", strcat("⚠️ ", FE_Failed, " failures"));\nlet beRequests = requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has "backend"\n| summarize BE_Total=count(), BE_Failed=countif(success == false), BE_AvgDuration=avg(duration)\n| extend BE_Health = iff(BE_Failed == 0, "✅ Healthy", strcat("⚠️ ", BE_Failed, " failures"));\nlet sqlDeps = dependencies\n| where timestamp {TimeRange}\n| where type == "SQL"\n| summarize SQL_Total=count(), SQL_Failed=countif(success == false), SQL_AvgDuration=avg(duration)\n| extend SQL_Health = iff(SQL_Failed == 0, "✅ Healthy", strcat("⚠️ ", SQL_Failed, " failures"));\nfrontdoorReqs | extend dummy=1\n| join kind=fullouter (feRequests | extend dummy=1) on dummy\n| join kind=fullouter (beRequests | extend dummy=1) on dummy\n| join kind=fullouter (sqlDeps | extend dummy=1) on dummy\n| project FD_Health, FD_Total, FE_Health, FE_Total, FE_AvgDuration=round(FE_AvgDuration,1), BE_Health, BE_Total, BE_AvgDuration=round(BE_AvgDuration,1), SQL_Health, SQL_Total, SQL_AvgDuration=round(SQL_AvgDuration,1)'
+              query: 'let feRequests = requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has "frontend"\n| summarize FE_Total=count(), FE_Failed=countif(success == false), FE_AvgDuration=avg(duration)\n| extend FE_Health = iff(FE_Failed == 0, "Healthy", strcat(FE_Failed, " failures"));\nlet beRequests = requests\n| where timestamp {TimeRange}\n| where cloud_RoleName has "backend"\n| summarize BE_Total=count(), BE_Failed=countif(success == false), BE_AvgDuration=avg(duration)\n| extend BE_Health = iff(BE_Failed == 0, "Healthy", strcat(BE_Failed, " failures"));\nlet sqlDeps = dependencies\n| where timestamp {TimeRange}\n| where type == "SQL"\n| summarize SQL_Total=count(), SQL_Failed=countif(success == false), SQL_AvgDuration=avg(duration)\n| extend SQL_Health = iff(SQL_Failed == 0, "Healthy", strcat(SQL_Failed, " failures"));\nlet httpDeps = dependencies\n| where timestamp {TimeRange}\n| where type == "HTTP"\n| summarize HTTP_Total=count(), HTTP_Failed=countif(success == false)\n| extend HTTP_Health = iff(HTTP_Failed == 0, "Healthy", strcat(HTTP_Failed, " failures"));\nfeRequests | extend dummy=1\n| join kind=fullouter (beRequests | extend dummy=1) on dummy\n| join kind=fullouter (sqlDeps | extend dummy=1) on dummy\n| join kind=fullouter (httpDeps | extend dummy=1) on dummy\n| project Frontend=strcat(FE_Health, " (", FE_Total, " req)"), Backend=strcat(BE_Health, " (", BE_Total, " req)"), SQL_Dependencies=strcat(SQL_Health, " (", SQL_Total, " calls)"), HTTP_Dependencies=strcat(HTTP_Health, " (", HTTP_Total, " calls)")'
               size: 4
               title: 'Layer Health Summary'
               queryType: 0
@@ -262,7 +262,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabA' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabA' }]
       name: 'group-tab-a'
     }
 
@@ -287,7 +287,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorAccessLog"\n| summarize Requests=count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc'
+              query: 'CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests=count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc'
               size: 0
               title: 'Front Door — Request Count Trend'
               queryType: 0
@@ -302,7 +302,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorAccessLog"\n| extend latencyMs = todouble(timeTaken_s) * 1000\n| summarize p50=percentile(latencyMs,50), p90=percentile(latencyMs,90), p95=percentile(latencyMs,95), p99=percentile(latencyMs,99) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc'
+              query: 'CDNAccessLog\n| where TimeGenerated {TimeRange}\n| extend latencyMs = todouble(TimeTaken) * 1000\n| summarize p50=percentile(latencyMs,50), p90=percentile(latencyMs,90), p95=percentile(latencyMs,95), p99=percentile(latencyMs,99) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc'
               size: 0
               title: 'Edge Latency (ms) — Percentiles'
               queryType: 0
@@ -318,7 +318,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorAccessLog"\n| extend StatusCode = toint(httpStatusCode_s)\n| extend StatusClass = case(StatusCode >= 500, "5xx", StatusCode >= 400, "4xx", StatusCode >= 300, "3xx", "2xx")\n| summarize Count=count() by bin(TimeGenerated, 5m), StatusClass\n| order by TimeGenerated asc'
+              query: 'CDNAccessLog\n| where TimeGenerated {TimeRange}\n| extend StatusCode = toint(HttpStatusCode)\n| extend StatusClass = case(StatusCode >= 500, "5xx", StatusCode >= 400, "4xx", StatusCode >= 300, "3xx", "2xx")\n| summarize Count=count() by bin(TimeGenerated, 5m), StatusClass\n| order by TimeGenerated asc'
               size: 0
               title: 'HTTP Status Code Distribution'
               queryType: 0
@@ -334,7 +334,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorHealthProbeLog"\n| extend Result = iff(toint(httpStatusCode_s) >= 200 and toint(httpStatusCode_s) < 400, "Healthy", "Unhealthy")\n| summarize Count=count() by bin(TimeGenerated, 5m), Result, originName_s\n| order by TimeGenerated asc'
+              query: 'CDNHealthProbeLog\n| where TimeGenerated {TimeRange}\n| extend Result = iff(toint(HttpStatusCode) >= 200 and toint(HttpStatusCode) < 400, "Healthy", "Unhealthy")\n| summarize Count=count() by bin(TimeGenerated, 5m), Result, OriginName\n| order by TimeGenerated asc'
               size: 0
               title: 'Backend Health Probe Results'
               queryType: 0
@@ -350,7 +350,7 @@ var serializedWorkbook = string({
             type: 3
             content: {
               version: 'KqlItem/1.0'
-              query: 'AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == "FrontDoorAccessLog"\n| summarize Requests=count(), AvgLatencyMs=round(avg(todouble(timeTaken_s))*1000,1), Errors=countif(toint(httpStatusCode_s)>=400) by requestUri_s\n| top 20 by Requests desc\n| project URL=requestUri_s, Requests, AvgLatencyMs, Errors, ErrorRate=round(todouble(Errors)/todouble(Requests)*100,1)'
+              query: 'CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests=count(), AvgLatencyMs=round(avg(todouble(TimeTaken))*1000,1), Errors=countif(toint(HttpStatusCode)>=400) by RequestUri\n| top 20 by Requests desc\n| project URL=RequestUri, Requests, AvgLatencyMs, Errors, ErrorRate=round(todouble(Errors)/todouble(Requests)*100,1)'
               size: 0
               title: 'Top 20 URLs by Volume'
               queryType: 0
@@ -363,7 +363,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabB' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabB' }]
       name: 'group-tab-b'
     }
 
@@ -461,7 +461,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabC' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabC' }]
       name: 'group-tab-c'
     }
 
@@ -560,7 +560,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabD' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabD' }]
       name: 'group-tab-d'
     }
 
@@ -660,7 +660,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabE' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabE' }]
       name: 'group-tab-e'
     }
 
@@ -843,7 +843,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabF' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabF' }]
       name: 'group-tab-f'
     }
 
@@ -953,7 +953,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabG' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabG' }]
       name: 'group-tab-g'
     }
 
@@ -1102,7 +1102,7 @@ var serializedWorkbook = string({
           }
         ]
       }
-      conditionalVisibility: { parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabH' }
+      conditionalVisibilities: [{ parameterName: 'SelectedTab', comparison: 'isEqualTo', value: 'tabH' }]
       name: 'group-tab-h'
     }
   ]
