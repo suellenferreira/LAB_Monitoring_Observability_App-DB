@@ -201,7 +201,8 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │   ├── sql-vm.bicep            # VM with SQL Server + AMA + DCR + NSG/PIP/NIC diagnostics
 │   ├── front-door.bicep        # Azure Front Door + diagnostics
 │   ├── availability-tests.bicep    # Standard URL ping tests (Frontend + Backend)
-│   └── workbook.bicep          # E2E Observability Workbook (8 tabs)
+│   ├── workbook-v2.bicep       # E2E Observability Workbook (Bicep wrapper)
+│   └── workbook-v2.json        # Workbook definition (raw JSON, 8 tabs)
 ├── src/
 │   ├── backend/                # ASP.NET Core 8 Web API (PaaS + IaaS)
 │   │   ├── BackendApi.csproj
@@ -303,7 +304,7 @@ The lab includes a custom-built **Azure Monitor Workbook** deployed as Infrastru
 | Tab | Title | What It Shows |
 |-----|-------|---------------|
 | **A** | E2E Overview | Health badges per layer, request volume sparklines, latency percentiles, top errors |
-| **B** | Edge: Front Door | Request trends, edge latency percentiles, HTTP 4xx/5xx rates, health probe results, top URLs |
+| **B** | Edge: Front Door | Request trends, edge latency percentiles, HTTP 4xx/5xx rates, top failing URLs, top edge locations (POP) |
 | **C** | Frontend (FE) | Request rate & failures, response time distribution, exceptions, top operations, HTTP logs |
 | **D** | Backend (API) | Same as FE plus SQL dependency call breakdown, top API endpoints |
 | **E** | Dependencies & Flow | FE→BE HTTP calls, BE→SQL calls, latency waterfall by layer, failed dependency breakdown |
@@ -335,7 +336,8 @@ Workbook queries pull from:
   │    └── availabilityResults → URL ping test results (SLO)
   │
   └── Log Analytics Workspace (Infrastructure)
-       ├── AzureDiagnostics  → Front Door access/probe logs, SQL diagnostics
+       ├── AzureDiagnostics  → Front Door access/probe logs (FrontDoorAccessLog category),
+       │                       SQL diagnostics (QueryStoreWaitStatistics, etc.)
        ├── AzureMetrics      → SQL DTU/CPU, connection metrics
        ├── Perf              → VM guest OS counters (CPU, memory, disk, SQL, network)
        ├── Event             → Windows Event Log (errors, warnings)
@@ -393,6 +395,22 @@ Results appear in the **Availability / SLO** tab (Tab G) of the workbook and in 
 - Health probe results
 - WAF decision logs
 - Request latency and origin health metrics
+
+## Security Considerations
+
+This lab environment includes several security-relevant configurations. Review and tighten these before adapting for production use:
+
+| Area | Default | Recommendation |
+|------|---------|----------------|
+| **NSG Rules** | RDP (3389) and SQL (1433) allow `*` by default | Set `allowedSourceAddress` parameter in `sql-vm.bicep` to your IP or CIDR |
+| **CORS Policy** | Backend restricts origins to the frontend App Service URL via `ALLOWED_ORIGINS` env var | Add Front Door endpoint if needed; falls back to `AllowAnyOrigin` if not set |
+| **SQL VM Access** | Public IP with `connectivityType: PUBLIC` | Consider switching to `PRIVATE` + Azure Bastion for production |
+| **Azure SQL Public Access** | `publicNetworkAccess: Enabled` with Azure Services firewall rule | Use Private Endpoints for production workloads |
+| **TrustServerCertificate** | `True` for Azure AD Default and SQL VM connections | Set to `False` and provision proper certificates for production |
+| **Sensitive Secrets** | Passed via GitHub Secrets; no hardcoded passwords in code | Ensure all `SQL_ADMIN_PASSWORD`, `VM_ADMIN_PASSWORD` secrets are set |
+| **CI/CD Logging** | Subscription ID and Tenant ID are masked in workflow output | Review workflow logs after runs to verify no secrets leak |
+
+> **Important:** The `deploy-config.cfg` file contains resource group names, regions, and SKUs — not secrets. All sensitive values (passwords, client secrets, object IDs) must be stored as **GitHub Secrets**.
 
 ## License
 

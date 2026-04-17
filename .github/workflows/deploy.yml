@@ -104,7 +104,7 @@ jobs:
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
             spClientId=${{ env.SP_CLIENT_ID }}
             spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
@@ -171,7 +171,7 @@ jobs:
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
             spClientId=${{ env.SP_CLIENT_ID }}
             spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}
@@ -254,8 +254,8 @@ jobs:
           echo "========================================"
           echo "  Deployment Parameters Summary"
           echo "========================================"
-          echo "  Subscription ID : ${{ env.AZURE_SUBSCRIPTION_ID }}"
-          echo "  Tenant ID       : ${{ env.AZURE_TENANT_ID }}"
+          echo "  Subscription ID : ***masked***"
+          echo "  Tenant ID       : ***masked***"
           echo "  Resource Group  : ${{ env.RESOURCE_GROUP }}"
           echo "  Location        : ${{ env.LOCATION }}"
           echo "  Project Prefix  : ${{ env.PROJECT_PREFIX }}"
@@ -266,7 +266,7 @@ jobs:
           echo "  Backend Stack   : ${{ env.BACKEND_RUNTIME }}"
           echo "  ----------------------------------------"
           echo "  SQL Auth Mode   : ${{ secrets.SQL_AUTH_MODE || 'entraOnly' }}"
-          echo "  SQL Admin Login : ${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}"
+          echo "  SQL Admin Login : ***masked***"
           echo "  SQL DB SKU      : ${{ env.SQL_DATABASE_SKU_NAME }} (${{ env.SQL_DATABASE_SKU_TIER }})"
           echo "  ----------------------------------------"
           echo "  VM Admin User   : ${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}"
@@ -296,7 +296,7 @@ jobs:
             sqlEntraAdminLogin=${{ secrets.SQL_ENTRA_ADMIN_LOGIN }}
             sqlEntraAdminPrincipalType=${{ secrets.SQL_ENTRA_ADMIN_PRINCIPAL_TYPE || 'Application' }}
             sqlAdminLogin=${{ secrets.SQL_ADMIN_LOGIN || 'sqladminuser' }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD || 'NotUsedInEntraOnlyMode1!' }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
             spClientId=${{ env.SP_CLIENT_ID }}
             spClientSecret=${{ env.SP_CLIENT_SECRET }}
             vmAdminUsername=${{ secrets.VM_ADMIN_USERNAME || 'vmadminuser' }}

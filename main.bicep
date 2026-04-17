@@ -206,6 +206,7 @@ module backendApp 'modules/app-service-backend.bicep' = {
     linuxFxVersion: backendLinuxFxVersion
     sqlConnectionString: sqlConnectionString
     sqlVmConnectionString: 'Server=tcp:${sqlVm.outputs.publicIpAddress},1433;Database=AdventureWorks2022;User ID=${vmAdminUsername};Password=${vmAdminPassword};Encrypt=True;TrustServerCertificate=True;'
+    allowedOrigins: 'https://app-frontend-${nameSuffix}.azurewebsites.net'
   }
 }
 

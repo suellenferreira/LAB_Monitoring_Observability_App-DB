@@ -50,6 +50,9 @@ param vmImageSku string = 'sqldev-gen2'
 @description('OS disk storage account type.')
 param osDiskStorageType string = 'Standard_LRS'
 
+@description('Allowed source IP or CIDR for RDP and SQL access. Defaults to * (any) — restrict in production.')
+param allowedSourceAddress string = '*'
+
 // -- Networking --
 resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: 'vnet-${nameSuffix}'
@@ -86,7 +89,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3389'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: allowedSourceAddress
           destinationAddressPrefix: '*'
         }
       }
@@ -99,7 +102,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '1433'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: allowedSourceAddress
           destinationAddressPrefix: '*'
         }
       }

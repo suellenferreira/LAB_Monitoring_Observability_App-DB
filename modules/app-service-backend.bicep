@@ -35,6 +35,9 @@ param sqlConnectionString string = ''
 @description('SQL VM connection string for the IaaS database.')
 param sqlVmConnectionString string = ''
 
+@description('Semicolon-separated list of allowed CORS origins (e.g. https://app-frontend-labmonitor-dev.azurewebsites.net).')
+param allowedOrigins string = ''
+
 resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
   name: appName
   location: location
@@ -72,6 +75,10 @@ resource backendApp 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'ConnectionStrings__SqlVmConnection'
           value: sqlVmConnectionString
+        }
+        {
+          name: 'ALLOWED_ORIGINS'
+          value: allowedOrigins
         }
       ]
     }

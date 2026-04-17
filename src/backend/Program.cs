@@ -22,7 +22,17 @@ using Microsoft.ApplicationInsights;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+{
+    var origins = builder.Configuration["ALLOWED_ORIGINS"]?
+        .Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
+    options.AddDefaultPolicy(policy =>
+    {
+        if (origins.Length > 0)
+            policy.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader();
+        else
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 app.UseCors();
