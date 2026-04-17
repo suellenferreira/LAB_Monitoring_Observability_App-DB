@@ -34,7 +34,7 @@ param grafanaName string
 param skuSize string = 'X1'
 
 // -- Grafana Instance --
-resource grafana 'Microsoft.Dashboard/grafana@2024-11-01' = {
+resource grafana 'Microsoft.Dashboard/grafana@2025-08-01' = {
   name: grafanaName
   location: location
   sku: {
