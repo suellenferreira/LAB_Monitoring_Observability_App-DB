@@ -125,7 +125,7 @@ jobs:
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
-            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
+            grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
           deploymentMode: Validate
 
   what-if:
@@ -196,7 +196,7 @@ jobs:
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
-            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
+            grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
           additionalArguments: --what-if
 
   deploy:
@@ -325,7 +325,7 @@ jobs:
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
-            grafanaSku=${{ env.GRAFANA_SKU || 'Essential' }}
+            grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false
 

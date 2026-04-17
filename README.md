@@ -47,7 +47,9 @@ Azure demo environment showcasing end-to-end observability across a full-stack a
 | **Availability Tests** | Proactive uptime monitoring | URL ping tests from 5 global locations (Frontend + Backend API) |
 | **Azure Monitor Workbook** | E2E observability dashboard | 8-tab workbook: Edge → App → Dependencies → DB → SLO → Investigations |
 | **Azure Monitor Alerts** *(optional)* | Proactive alert rules | 4 log alerts (App Insights KQL) + 2 metric alerts (App Service 5xx) + Action Group |
-| **Azure Managed Grafana** *(optional)* | Grafana dashboard | 18-panel dashboard mirroring the workbook (Essential ~$36/mo, Standard ~$130/mo) |
+| **Azure Managed Grafana** *(optional)* | Grafana dashboard | 18-panel dashboard mirroring the workbook (Standard X1 ~$62/mo, X2 ~$124/mo + $6/user) |
+
+> **Cost disclaimer:** All cost estimates in this project (code comments, config files, and this README) are approximate as of April 2026. Azure pricing changes over time — always confirm current pricing at [Azure Pricing](https://azure.microsoft.com/pricing/) before deploying.
 
 ## Prerequisites
 
@@ -404,23 +406,46 @@ The lab includes an optional **Azure Managed Grafana** dashboard that mirrors th
 
 > **Why not Azure Portal Dashboard (native)?** The native Azure Portal Dashboard only supports pinned metric charts and basic Log Analytics query tiles. It cannot render KQL-driven panels with custom visualizations, row-based collapsible layouts, or the full set of chart types (gauge, stat, timeseries, table) required to replicate the 8-tab observability report. Grafana's Azure Monitor data source plugin provides full KQL query support with rich panel options.
 
-### Cost Warning
+### Free Alternative: Azure Monitor Dashboards with Grafana (Preview)
 
-| Tier | Approximate Cost | Grafana Alerting | Enterprise Plugins |
-|------|-----------------|------------------|-------------------|
-| **Essential** | ~$0.05/hr (~$36/month) | No | No |
-| **Standard** | ~$0.18/hr (~$130/month) | Yes | Yes |
+If you do not want to incur costs, you can use the **Azure Monitor dashboards with Grafana** feature — a free, Azure-native Grafana experience built directly into the Azure Portal:
 
-> **There is no free tier** for Azure Managed Grafana. Delete the resource when no longer needed to stop charges.
+1. In the **Azure Portal**, open **Azure Monitor**
+2. In the service menu, select **Dashboards with Grafana (preview)** → **New** → **Import**
+3. Upload the `modules/grafana-dashboard.json` file from this repository
+4. Before importing, manually replace the placeholders in the JSON:
+   - `__APP_INSIGHTS_ID__` → your Application Insights resource ID
+   - `__LAW_ID__` → your Log Analytics workspace resource ID
+   - `__NAME_SUFFIX__` → your project name suffix (e.g., `labmonitor-dev`)
+5. Select **Load**, enter a name, and choose the subscription/resource group
 
-### Enabling Grafana
+**Limitations of the free tier** (compared to Azure Managed Grafana Standard):
+- Maximum 1 workspace per subscription, 20 dashboards, 5 data sources
+- No alerting, email, reporting, or private networking
+- No SLA, on-demand hosting resources
+- Only Azure data source plugins
+
+### Automated Deployment: Azure Managed Grafana Standard (Paid)
+
+For automated pipeline deployment with full features, the lab uses **Azure Managed Grafana Standard** tier:
+
+| Instance Size | Standard Units | Approximate Cost | Alert Rules |
+|---------------|---------------|------------------|-------------|
+| **X1** (default) | 2 SU | ~$0.086/hr (~$62/mo) + $6/active user | 500 |
+| **X2** (larger) | 4 SU | ~$0.172/hr (~$124/mo) + $6/active user | 1,000 |
+
+> **Costs shown are approximate as of April 2026.** Always confirm current pricing at [Azure Managed Grafana pricing](https://azure.microsoft.com/pricing/details/managed-grafana/) before deploying.
+>
+> **Delete the Grafana resource when no longer needed** to stop charges. The Essential tier has been deprecated by Microsoft (March 2026) — only Standard is supported.
+
+### Enabling Grafana (Pipeline)
 
 1. Set `DEPLOY_GRAFANA=true` in `deploy-config.cfg`
-2. Optionally change `GRAFANA_SKU=Standard` (default: `Essential`)
+2. Optionally change `GRAFANA_SKU_SIZE=X2` for more capacity (default: `X1`)
 3. Push to trigger deployment
 
 The pipeline will:
-1. Deploy the Grafana instance via Bicep
+1. Deploy the Grafana instance via Bicep (Standard tier, selected size)
 2. Assign `Monitoring Reader` role to the Grafana managed identity
 3. Assign `Grafana Admin` role to the deployment SP
 4. Import the 18-panel dashboard with resolved resource IDs

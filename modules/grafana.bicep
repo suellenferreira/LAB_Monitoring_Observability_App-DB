@@ -7,11 +7,16 @@
 //
 // ╔══════════════════════════════════════════════════════════════════════╗
 // ║ COST DISCLAIMER                                                    ║
-// ║ Azure Managed Grafana incurs charges based on the selected tier:   ║
-// ║   - Essential: ~$0.05/hr (~$36/month)                              ║
-// ║   - Standard:  ~$0.18/hr (~$130/month)                             ║
+// ║ Azure Managed Grafana — Standard tier (only supported SKU):        ║
+// ║   X1 (default): 2 SU → ~$0.086/hr (~$62/mo) + $6/active user     ║
+// ║   X2 (larger) : 4 SU → ~$0.172/hr (~$124/mo) + $6/active user    ║
 // ║ There is NO free tier for Azure Managed Grafana.                   ║
+// ║ For a free alternative, use "Azure Monitor dashboards with         ║
+// ║ Grafana (preview)" in the Azure Portal — see README.               ║
 // ║ Delete the resource when no longer needed to stop charges.         ║
+// ║                                                                    ║
+// ║ ⚠ Costs shown are approximate as of April 2026. Always confirm    ║
+// ║   current pricing at the link below before deploying.              ║
 // ║ Pricing: https://azure.microsoft.com/pricing/details/managed-grafana/ ║
 // ╚══════════════════════════════════════════════════════════════════════╝
 //
@@ -24,16 +29,17 @@ param location string
 @description('Name of the Grafana workspace.')
 param grafanaName string
 
-@description('Grafana pricing tier. Essential (~$36/mo) or Standard (~$130/mo).')
-@allowed(['Essential', 'Standard'])
-param skuName string = 'Essential'
+@description('Grafana instance size. X1 (default, 2 SU, 500 alert rules) or X2 (4 SU, 1000 alert rules).')
+@allowed(['X1', 'X2'])
+param skuSize string = 'X1'
 
 // -- Grafana Instance --
-resource grafana 'Microsoft.Dashboard/grafana@2023-09-01' = {
+resource grafana 'Microsoft.Dashboard/grafana@2024-11-01' = {
   name: grafanaName
   location: location
   sku: {
-    name: skuName
+    name: 'Standard'
+    size: skuSize
   }
   identity: {
     type: 'SystemAssigned'

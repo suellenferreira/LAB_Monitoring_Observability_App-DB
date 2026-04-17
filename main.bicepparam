@@ -57,8 +57,10 @@ param deployAlerts = false
 param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
 
 // ===========================================================================
-// Grafana (Optional — incurs cost, no free tier)
+// Grafana (Optional — incurs cost, see README for free alternative)
 // ===========================================================================
-// Essential: ~$36/month | Standard: ~$130/month
+// Standard X1: ~$62/month + $6/active user | X2: ~$124/month + $6/active user
+// ⚠ Costs are approximate as of April 2026. Confirm at:
+//   https://azure.microsoft.com/pricing/details/managed-grafana/
 param deployGrafana = false
-param grafanaSku = 'Essential'
+param grafanaSkuSize = 'X1'

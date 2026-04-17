@@ -5,6 +5,8 @@
 // DISCLAIMER:
 // This template is provided for EDUCATIONAL and DEMO purposes only.
 // It deploys Azure resources that WILL INCUR COSTS on your subscription.
+// All costs shown in this project are approximate as of April 2026.
+// Always confirm current pricing at https://azure.microsoft.com/pricing/
 // Resources include: App Services, Azure SQL, Virtual Machines, Front Door,
 // Log Analytics, and Application Insights.
 //
@@ -127,17 +129,22 @@ param alertEmailAddress string = ''
 
 // -- Grafana (Optional) --
 // ╔══════════════════════════════════════════════════════════════════════╗
-// ║ COST DISCLAIMER: Azure Managed Grafana has NO free tier.           ║
-// ║   Essential: ~$0.05/hr (~$36/month)                                ║
-// ║   Standard:  ~$0.18/hr (~$130/month)                               ║
+// ║ COST DISCLAIMER: Azure Managed Grafana — Standard tier (paid):     ║
+// ║   X1 (default): 2 SU → ~$0.086/hr (~$62/mo) + $6/active user     ║
+// ║   X2 (larger) : 4 SU → ~$0.172/hr (~$124/mo) + $6/active user    ║
+// ║ Free alternative: Azure Monitor dashboards with Grafana (preview)  ║
 // ║ Delete the Grafana resource when no longer needed to stop charges. ║
+// ║                                                                    ║
+// ║ ⚠ Costs shown are approximate as of April 2026. Always confirm    ║
+// ║   current pricing before deploying:                                ║
+// ║   https://azure.microsoft.com/pricing/details/managed-grafana/     ║
 // ╚══════════════════════════════════════════════════════════════════════╝
-@description('Deploy Azure Managed Grafana dashboard. Set to true to enable (incurs cost, no free tier).')
+@description('Deploy Azure Managed Grafana dashboard. Set to true to enable (incurs cost — see README for free alternative).')
 param deployGrafana bool = false
 
-@description('Azure Managed Grafana pricing tier.')
-@allowed(['Essential', 'Standard'])
-param grafanaSku string = 'Essential'
+@description('Azure Managed Grafana instance size: X1 (default, 2 SU, 500 alert rules) or X2 (4 SU, 1000 alert rules).')
+@allowed(['X1', 'X2'])
+param grafanaSkuSize string = 'X1'
 
 // -- Variables --
 var nameSuffix = '${projectPrefix}-${environment}'
@@ -356,7 +363,7 @@ module grafana 'modules/grafana.bicep' = if (deployGrafana) {
   params: {
     location: location
     grafanaName: 'grafana-${nameSuffix}'
-    skuName: grafanaSku
+    skuSize: grafanaSkuSize
   }
 }
 
