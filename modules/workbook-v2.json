@@ -203,14 +203,14 @@
         "items": [
           {
             "type": 1,
-            "content": { "json": "## Edge: Azure Front Door\nEdge health, latency, and error analysis. Uses `CDNAccessLog` and `CDNHealthProbeLog` resource-specific tables." },
+            "content": { "json": "## Edge: Azure Front Door\nEdge health, latency, and error analysis. Queries `AzureDiagnostics` with `FrontDoorAccessLog` category." },
             "name": "tab-b-header"
           },
           {
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
               "size": 0,
               "title": "Request Count Trend",
               "queryType": 0,
@@ -224,7 +224,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Total = count(), Err4xx = countif(HttpStatusCode >= 400 and HttpStatusCode < 500), Err5xx = countif(HttpStatusCode >= 500) by bin(TimeGenerated, 5m)\n| extend Pct4xx = round(toreal(Err4xx) / toreal(Total) * 100, 2), Pct5xx = round(toreal(Err5xx) / toreal(Total) * 100, 2)\n| project TimeGenerated, Pct4xx, Pct5xx\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where TimeGenerated {TimeRange}\n| extend HttpStatus = toint(httpStatusCode_d)\n| summarize Total = count(), Err4xx = countif(HttpStatus >= 400 and HttpStatus < 500), Err5xx = countif(HttpStatus >= 500) by bin(TimeGenerated, 5m)\n| extend Pct4xx = round(toreal(Err4xx) / toreal(Total) * 100, 2), Pct5xx = round(toreal(Err5xx) / toreal(Total) * 100, 2)\n| project TimeGenerated, Pct4xx, Pct5xx\n| order by TimeGenerated asc",
               "size": 0,
               "title": "4xx / 5xx Error Rate (%)",
               "queryType": 0,
@@ -244,7 +244,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| extend LatencyMs = TimeTaken * 1000\n| summarize P50 = round(percentile(LatencyMs, 50), 1), P90 = round(percentile(LatencyMs, 90), 1), P95 = round(percentile(LatencyMs, 95), 1) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where TimeGenerated {TimeRange}\n| extend LatencyMs = todouble(timeTaken_d) * 1000\n| summarize P50 = round(percentile(LatencyMs, 50), 1), P90 = round(percentile(LatencyMs, 90), 1), P95 = round(percentile(LatencyMs, 95), 1) by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
               "size": 0,
               "title": "Edge Latency Percentiles (ms)",
               "queryType": 0,
@@ -265,7 +265,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| where HttpStatusCode >= 400\n| summarize ErrorCount = count() by RequestUri, HttpStatusCode\n| top 20 by ErrorCount desc\n| project RequestUri, HttpStatusCode, ErrorCount",
+              "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where TimeGenerated {TimeRange}\n| extend HttpStatus = toint(httpStatusCode_d)\n| where HttpStatus >= 400\n| summarize ErrorCount = count() by requestUri_s, HttpStatus\n| top 20 by ErrorCount desc\n| project RequestUri = requestUri_s, HttpStatusCode = HttpStatus, ErrorCount",
               "size": 0,
               "title": "Top Failing URLs",
               "queryType": 0,
@@ -280,7 +280,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CDNAccessLog\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by Pop\n| top 15 by Requests desc\n| project EdgeLocation = Pop, Requests",
+              "query": "AzureDiagnostics\n| where Category == 'FrontDoorAccessLog'\n| where TimeGenerated {TimeRange}\n| summarize Requests = count() by pop_s\n| top 15 by Requests desc\n| project EdgeLocation = pop_s, Requests",
               "size": 0,
               "title": "Top Edge Locations (POP)",
               "queryType": 0,
