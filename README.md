@@ -159,23 +159,23 @@ az login --tenant <YOUR_TENANT_ID>
 az account set --subscription <YOUR_SUBSCRIPTION_ID>
 
 # Create resource group
-az group create --name rg-lab-monitoring-observability --location centralus
+az group create --name rg-lab-monitoring-observability2 --location centralus
 
 # Set credentials as environment variables
 export SQL_ENTRA_ADMIN_OBJECT_ID='<YOUR_ENTRA_OBJECT_ID>'
 export SQL_ENTRA_ADMIN_LOGIN='<YOUR_ENTRA_UPN>'
-export VM_ADMIN_PASSWORD='An0therStr0ngP@ss!'
+export VM_ADMIN_PASSWORD='<YOUR_STRONG_PASSWORD>'
 
 # Deploy using the parameters file (uses entraOnly mode by default)
 az deployment group create \
-  --resource-group rg-lab-monitoring-observability \
+  --resource-group rg-lab-monitoring-observability2 \
   --template-file main.bicep \
   --parameters main.bicepparam
 
 # Or deploy with sqlAndEntra mode (SQL + Entra ID authentication)
-export SQL_ADMIN_PASSWORD='YourStr0ngP@ssword!'
+export SQL_ADMIN_PASSWORD='<YOUR_STRONG_PASSWORD>'
 az deployment group create \
-  --resource-group rg-lab-monitoring-observability \
+  --resource-group rg-lab-monitoring-observability2 \
   --template-file main.bicep \
   --parameters main.bicepparam \
   --parameters sqlAuthMode=sqlAndEntra
@@ -188,7 +188,7 @@ az deployment group create \
 Delete all resources when the lab is no longer needed:
 
 ```bash
-az group delete --name rg-lab-monitoring-observability --yes --no-wait
+az group delete --name rg-lab-monitoring-observability2 --yes --no-wait
 ```
 
 ## Project Structure
@@ -510,7 +510,7 @@ This lab environment includes several security-relevant configurations. Review a
 
 | Area | Default | Recommendation |
 |------|---------|----------------|
-| **NSG Rules** | RDP (3389) and SQL (1433) allow `*` by default | Set `allowedSourceAddress` parameter in `sql-vm.bicep` to your IP or CIDR |
+| **NSG Rules** | RDP (3389) and SQL (1433) allow `*` by default | Set `ALLOWED_SOURCE_ADDRESS` in `deploy-config.cfg` to your IP or CIDR |
 | **CORS Policy** | Backend restricts origins to the frontend App Service URL via `ALLOWED_ORIGINS` env var | Add Front Door endpoint if needed; falls back to `AllowAnyOrigin` if not set |
 | **SQL VM Access** | Public IP with `connectivityType: PUBLIC` | Consider switching to `PRIVATE` + Azure Bastion for production |
 | **Azure SQL Public Access** | `publicNetworkAccess: Enabled` with Azure Services firewall rule | Use Private Endpoints for production workloads |

@@ -120,6 +120,9 @@ param vnetAddressPrefix string = '10.100.0.0/16'
 @description('SQL subnet CIDR within the VNet.')
 param subnetAddressPrefix string = '10.100.1.0/24'
 
+@description('Allowed source IP or CIDR for RDP (3389) and SQL (1433) NSG rules. Use your public IP for security. Default * allows any source.')
+param allowedSourceAddress string = '*'
+
 // -- Alerts (Optional) --
 @description('Deploy Azure Monitor alert rules (Action Group + Log/Metric alerts). Set to true to enable.')
 param deployAlerts bool = false
@@ -284,6 +287,7 @@ module sqlVm 'modules/sql-vm.bicep' = {
     osDiskStorageType: osDiskStorageType
     vnetAddressPrefix: vnetAddressPrefix
     subnetAddressPrefix: subnetAddressPrefix
+    allowedSourceAddress: allowedSourceAddress
   }
 }
 

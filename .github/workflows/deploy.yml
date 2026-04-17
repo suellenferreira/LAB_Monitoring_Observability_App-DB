@@ -10,7 +10,7 @@ on:
       resourceGroupName:
         description: 'Resource Group name'
         required: true
-        default: 'rg-lab-monitoring-observability'
+        default: 'rg-lab-monitoring-observability2'
         type: string
       location:
         description: 'Azure region to deploy'
@@ -121,6 +121,7 @@ jobs:
             osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
             vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            allowedSourceAddress=${{ env.ALLOWED_SOURCE_ADDRESS || '*' }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
@@ -194,6 +195,7 @@ jobs:
             osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
             vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            allowedSourceAddress=${{ env.ALLOWED_SOURCE_ADDRESS || '*' }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}
@@ -325,6 +327,7 @@ jobs:
             osDiskStorageType=${{ env.OS_DISK_STORAGE_TYPE }}
             vnetAddressPrefix=${{ env.VNET_ADDRESS_PREFIX }}
             subnetAddressPrefix=${{ env.SUBNET_ADDRESS_PREFIX }}
+            allowedSourceAddress=${{ env.ALLOWED_SOURCE_ADDRESS || '*' }}
             logRetentionDays=${{ env.LOG_RETENTION_DAYS }}
             appInsightsRetentionDays=${{ env.APP_INSIGHTS_RETENTION_DAYS }}
             deployAlerts=${{ env.DEPLOY_ALERTS || 'false' }}

@@ -42,6 +42,8 @@ param osDiskStorageType = 'Standard_LRS'
 // ===========================================================================
 param vnetAddressPrefix = '10.100.0.0/16'
 param subnetAddressPrefix = '10.100.1.0/24'
+// Restrict RDP/SQL access to your IP (e.g., '203.0.113.50'). Default '*' allows any source.
+param allowedSourceAddress = readEnvironmentVariable('ALLOWED_SOURCE_ADDRESS', '*')
 
 // ===========================================================================
 // Observability
@@ -53,7 +55,7 @@ param appInsightsRetentionDays = 90
 // Alerts (Optional)
 // ===========================================================================
 // Set to true to deploy Azure Monitor alert rules
-param deployAlerts = false
+param deployAlerts = true
 param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
 
 // ===========================================================================
@@ -62,7 +64,7 @@ param alertEmailAddress = readEnvironmentVariable('ALERT_EMAIL_ADDRESS', '')
 // Standard X1: ~$62/month + $6/active user | X2: ~$124/month + $6/active user
 // ⚠ Costs are approximate as of April 2026. Confirm at:
 //   https://azure.microsoft.com/pricing/details/managed-grafana/
-param deployGrafana = false
+param deployGrafana = true
 param grafanaSkuSize = 'X1'
 // Get your Object ID: az ad signed-in-user show --query id -o tsv
-param grafanaAdminPrincipalId = '536e6df3-d14c-452b-af83-ae1c1b05f6ae'
+param grafanaAdminPrincipalId = readEnvironmentVariable('GRAFANA_ADMIN_PRINCIPAL_ID', '')

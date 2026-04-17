@@ -20,7 +20,7 @@ APPLICATION LAYER
     -.-> hosts --> App Service Frontend
     -.-> hosts --> App Service Backend API
 
-  App Service - Frontend (app-frontend-labmonitor-dev) [NODE|20-lts]
+  App Service - Frontend (app-frontend-labmonitor-dev) [DOTNETCORE|8.0]
     ==> telemetry (connection string) --> Application Insights
     -.-> diag settings (HTTP logs, app logs, platform logs) --> Log Analytics
 
@@ -40,8 +40,8 @@ DATABASE LAYER - PaaS
 
 
 DATABASE LAYER - IaaS
-  VNet (vnet-labmonitor-dev) [10.0.0.0/16]
-    --> Subnet snet-sql [10.0.1.0/24]
+  VNet (vnet-labmonitor-dev) [10.100.0.0/16]
+    --> Subnet snet-sql [10.100.1.0/24]
         -.-> NSG (nsg-vm-sql-dev) attached
         --> NIC + Public IP
             --> Azure VM + SQL Server (vm-sql-dev) [Standard_D2s_v5]

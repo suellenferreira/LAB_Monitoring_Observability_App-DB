@@ -10,7 +10,7 @@ flowchart TB
 
     subgraph APP["Application Layer"]
         ASP["App Service Plan\n(asp-labmonitor-dev)"]
-        FE["App Service - Frontend\n(app-frontend-labmonitor-dev)\nNODE|20-lts"]
+        FE["App Service - Frontend\n(app-frontend-labmonitor-dev)\nDOTNETCORE|8.0"]
         BE["App Service - Backend API\n(app-backend-labmonitor-dev)\nDOTNETCORE|8.0"]
     end
 
@@ -20,8 +20,8 @@ flowchart TB
     end
 
     subgraph DBIAAS["Database Layer - IaaS"]
-        VNET["VNet\n(vnet-labmonitor-dev)\n10.0.0.0/16"]
-        SUBNET["Subnet snet-sql\n10.0.1.0/24"]
+        VNET["VNet\n(vnet-labmonitor-dev)\n10.100.0.0/16"]
+        SUBNET["Subnet snet-sql\n10.100.1.0/24"]
         NSG["NSG\n(nsg-vm-sql-dev)"]
         NIC["NIC + Public IP"]
         VM["Azure VM + SQL Server\n(vm-sql-dev)\nStandard_D2s_v5"]
