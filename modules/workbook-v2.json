@@ -663,7 +663,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == 'QueryStoreWaitStatistics'\n| summarize TotalWaitMs = sum(todouble(total_query_wait_time_ms_d)) by bin(TimeGenerated, 15m), wait_category_s\n| top 50 by TotalWaitMs desc\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where Category == 'QueryStoreWaitStatistics'\n| extend WaitCategory = column_ifexists('wait_category_s', 'Unknown')\n| extend WaitTimeMs = todouble(column_ifexists('total_query_wait_time_ms_d', '0'))\n| summarize TotalWaitMs = sum(WaitTimeMs) by bin(TimeGenerated, 15m), WaitCategory\n| top 50 by TotalWaitMs desc\n| order by TimeGenerated asc",
               "size": 0,
               "title": "Azure SQL — Query Wait Categories",
               "queryType": 0,

@@ -147,6 +147,7 @@ resource frontDoorDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-
   scope: frontDoorProfile
   properties: {
     workspaceId: logAnalyticsWorkspaceId
+    logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
         category: 'FrontDoorAccessLog'
