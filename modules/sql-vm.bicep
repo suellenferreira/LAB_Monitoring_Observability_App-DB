@@ -239,10 +239,14 @@ resource installAdventureWorks 'Microsoft.Compute/virtualMachines/extensions@202
 }
 
 // Data Collection Rule: defines what guest OS data to collect
+// dependsOn amaExtension: ensures the DCR is created AFTER the VM + AMA extension
+// are fully provisioned (~5-10 min), giving the Log Analytics workspace enough time
+// to initialize its built-in Perf/Event tables on a from-scratch deployment.
 resource dcr 'Microsoft.Insights/dataCollectionRules@2023-03-11' = {
   name: 'dcr-${vmName}'
   location: location
   kind: 'Windows'
+  dependsOn: [amaExtension]
   properties: {
     dataSources: {
       // Windows performance counters: CPU, memory, disk, SQL Server metrics

@@ -56,6 +56,7 @@ jobs:
   validate:
     name: Validate Bicep
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]' || github.event_name != 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -135,7 +136,7 @@ jobs:
     name: What-If Analysis
     runs-on: ubuntu-latest
     needs: validate
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

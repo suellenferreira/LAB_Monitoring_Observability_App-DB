@@ -32,25 +32,6 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   }
 }
 
-// Pre-create built-in tables required by Data Collection Rules.
-// On a fresh workspace these tables may not exist yet, causing DCR validation
-// to fail with "Table for output stream 'Microsoft-Perf' is not available".
-resource perfTable 'Microsoft.OperationalInsights/workspaces/tables@2022-10-01' = {
-  parent: workspace
-  name: 'Perf'
-  properties: {
-    plan: 'Analytics'
-  }
-}
-
-resource eventTable 'Microsoft.OperationalInsights/workspaces/tables@2022-10-01' = {
-  parent: workspace
-  name: 'Event'
-  properties: {
-    plan: 'Analytics'
-  }
-}
-
 @description('Resource ID of the Log Analytics workspace.')
 output workspaceId string = workspace.id
 
