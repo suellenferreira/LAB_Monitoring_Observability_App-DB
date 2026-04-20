@@ -127,6 +127,7 @@ Go to **GitHub repo > Settings > Secrets and variables > Actions > New repositor
 | `SQL_ADMIN_LOGIN` | Custom SQL admin username (default: `sqladminuser`) | No |
 | `VM_ADMIN_USERNAME` | Custom VM admin username (default: `vmadminuser`) | No |
 | `ALERT_EMAIL_ADDRESS` | Email address for alert notifications | Only if `DEPLOY_ALERTS=true` |
+| `GRAFANA_ADMIN_PRINCIPAL_ID` | Entra ID object ID of the user/group to grant Grafana Admin access | Only if `DEPLOY_GRAFANA=true` |
 
 > To find your Entra ID object ID and UPN, run:
 > ```bash
@@ -504,6 +505,56 @@ The pipeline will:
 After deployment, the Grafana URL is printed in the pipeline output. You can also find it:
 - **Azure Portal** → **Resource Group** → `grafana-<prefix>-<env>` → **Overview** → **Endpoint**
 - Or via CLI: `az grafana show -g <rg> -n grafana-<prefix>-<env> --query properties.endpoint -o tsv`
+
+> **"No Grafana Role Assigned" error?** You must set the `GRAFANA_ADMIN_PRINCIPAL_ID` secret (see below).
+
+### Managing Grafana Access
+
+Azure Managed Grafana requires **Grafana-specific roles** separate from Azure RBAC. Without at least `Grafana Viewer`, users see "No Grafana Role Assigned" when accessing the endpoint.
+
+**Automated (pipeline deployment):**
+
+The pipeline automatically assigns `Grafana Admin` to the user/group specified in the `GRAFANA_ADMIN_PRINCIPAL_ID` GitHub Secret. Set this before deploying:
+
+```bash
+# Get your Entra ID object ID
+az ad signed-in-user show --query id -o tsv
+
+# Add the output as GitHub Secret: GRAFANA_ADMIN_PRINCIPAL_ID
+```
+
+**Manual (add additional users after deployment):**
+
+```bash
+GRAFANA_ID=$(az grafana show -g rg-lab-monitoring-observability \
+  -n grafana-labmonitor-dev --query id -o tsv)
+
+# Grafana Admin — full control (dashboards, data sources, users)
+az role assignment create \
+  --assignee "<USER_OBJECT_ID_OR_UPN>" \
+  --role "Grafana Admin" \
+  --scope "$GRAFANA_ID"
+
+# Grafana Editor — create/edit dashboards, cannot manage users
+az role assignment create \
+  --assignee "<USER_OBJECT_ID_OR_UPN>" \
+  --role "Grafana Editor" \
+  --scope "$GRAFANA_ID"
+
+# Grafana Viewer — read-only access to dashboards
+az role assignment create \
+  --assignee "<USER_OBJECT_ID_OR_UPN>" \
+  --role "Grafana Viewer" \
+  --scope "$GRAFANA_ID"
+```
+
+> **Note:** Role assignments can take up to 5 minutes to propagate. For newly created Grafana instances, it may take longer.
+
+| Role | Permissions |
+|------|-------------|
+| **Grafana Admin** | Full access: dashboards, data sources, users, settings |
+| **Grafana Editor** | Create/edit dashboards and data sources |
+| **Grafana Viewer** | Read-only access to dashboards |
 
 ## Observability Features by Layer
 

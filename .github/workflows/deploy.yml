@@ -129,7 +129,7 @@ jobs:
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
             grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
-            grafanaAdminPrincipalId=${{ env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
+            grafanaAdminPrincipalId=${{ secrets.GRAFANA_ADMIN_PRINCIPAL_ID || env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
           deploymentMode: Validate
 
   what-if:
@@ -203,7 +203,7 @@ jobs:
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
             grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
-            grafanaAdminPrincipalId=${{ env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
+            grafanaAdminPrincipalId=${{ secrets.GRAFANA_ADMIN_PRINCIPAL_ID || env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
           additionalArguments: --what-if
 
   deploy:
@@ -335,7 +335,7 @@ jobs:
             alertEmailAddress=${{ secrets.ALERT_EMAIL_ADDRESS || '' }}
             deployGrafana=${{ env.DEPLOY_GRAFANA || 'false' }}
             grafanaSkuSize=${{ env.GRAFANA_SKU_SIZE || 'X1' }}
-            grafanaAdminPrincipalId=${{ env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
+            grafanaAdminPrincipalId=${{ secrets.GRAFANA_ADMIN_PRINCIPAL_ID || env.GRAFANA_ADMIN_PRINCIPAL_ID || '' }}
           deploymentName: lab-monitoring-${{ github.run_number }}
           failOnStdErr: false
 
