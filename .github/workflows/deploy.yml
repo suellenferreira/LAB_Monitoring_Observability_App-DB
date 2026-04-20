@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Load deploy config
         run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
@@ -80,7 +80,7 @@ jobs:
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -138,7 +138,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Load deploy config
         run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
@@ -160,7 +160,7 @@ jobs:
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -213,7 +213,7 @@ jobs:
     environment: production
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Load deploy config
         run: grep -v '^\s*#' deploy-config.cfg | grep -v '^\s*$' >> $GITHUB_ENV
@@ -235,7 +235,7 @@ jobs:
           echo "SP_CLIENT_SECRET=$SP_CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 

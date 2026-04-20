@@ -91,10 +91,6 @@ resource sqlServerSqlAndEntra 'Microsoft.Sql/servers@2023-08-01-preview' = if (a
   }
 }
 
-// Reference the correct server based on auth mode
-var sqlServerId = authMode == 'entraOnly' ? sqlServerEntraOnly.id : sqlServerSqlAndEntra.id
-var sqlServerRef = authMode == 'entraOnly' ? sqlServerEntraOnly.name : sqlServerSqlAndEntra.name
-
 // Auditing: captures all database operations for compliance and security
 resource sqlAuditEntraOnly 'Microsoft.Sql/servers/auditingSettings@2023-08-01-preview' = if (authMode == 'entraOnly') {
   parent: sqlServerEntraOnly
@@ -285,7 +281,7 @@ resource masterDiagnosticsSqlAndEntra 'Microsoft.Insights/diagnosticSettings@202
 }
 
 @description('SQL Server FQDN.')
-output sqlServerFqdn string = authMode == 'entraOnly' ? sqlServerEntraOnly.properties.fullyQualifiedDomainName : sqlServerSqlAndEntra.properties.fullyQualifiedDomainName
+output sqlServerFqdn string = authMode == 'entraOnly' ? sqlServerEntraOnly!.properties.fullyQualifiedDomainName : sqlServerSqlAndEntra!.properties.fullyQualifiedDomainName
 
 @description('SQL Database name.')
 output sqlDatabaseName string = databaseName
