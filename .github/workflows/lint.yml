@@ -1,0 +1,29 @@
+name: Bicep Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.bicep'
+      - '**.bicepparam'
+      - 'bicepconfig.json'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint Bicep Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install/upgrade Bicep CLI
+        run: az bicep install
+
+      - name: Bicep Build (syntax + compile)
+        run: az bicep build --file main.bicep --stdout > /dev/null
+
+      - name: Bicep Lint (linter rules from bicepconfig.json)
+        run: az bicep lint --file main.bicep

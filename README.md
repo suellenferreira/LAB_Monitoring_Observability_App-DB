@@ -1,5 +1,7 @@
 # LAB: Monitoring & Observability — App + Database
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Azure demo environment showcasing end-to-end observability across a full-stack application with both PaaS and IaaS database workloads.
 
 ## Architecture
@@ -215,8 +217,15 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 ## Project Structure
 
 ```
-├── .github/workflows/
-│   └── deploy.yml              # GitHub Actions CI/CD pipeline
+├── .github/
+│   ├── dependabot.yml              # Auto-update Actions + NuGet dependencies
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml          # Deployment error report template
+│   │   └── config.yml              # Feature request template
+│   ├── PULL_REQUEST_TEMPLATE.md    # PR checklist
+│   └── workflows/
+│       ├── deploy.yml              # CI/CD pipeline (validate → what-if → deploy)
+│       └── lint.yml                # Bicep lint (no credentials needed, PR only)
 ├── modules/
 │   ├── log-analytics.bicep     # Log Analytics Workspace
 │   ├── app-insights.bicep      # Application Insights (workspace-based)
@@ -248,12 +257,18 @@ az group delete --name rg-lab-monitoring-observability --yes --no-wait
 │       │   ├── Employees.cshtml # Employee directory (IaaS — AdventureWorks2022)
 │       │   └── Departments.cshtml # Department listing (IaaS)
 │       └── wwwroot/css/site.css
+├── bicepconfig.json            # Bicep linter rules
+├── CODE_OF_CONDUCT.md          # Contributor Covenant v2.1
+├── CONTRIBUTING.md             # How to contribute, local validation, branch protection
 ├── deploy-config.cfg           # ← Single file for all tunable deployment parameters
+├── LICENSE                     # MIT License
 ├── main.bicep                  # Main orchestration template
 ├── main.bicepparam             # Bicep parameters file (for local CLI deployments)
+├── README.md
+├── SECURITY.md                 # Vulnerability reporting policy
+├── SUPPORT.md                  # Support channels and expectations
 ├── topology.mmd                # Mermaid topology diagram
-├── TOPOLOGY.txt                # Plain-text topology description
-└── README.md
+└── TOPOLOGY.txt                # Plain-text topology description
 ```
 
 ## Demo Applications
@@ -541,6 +556,10 @@ This lab environment includes several security-relevant configurations. Review a
 
 > **Important:** The `deploy-config.cfg` file contains resource group names, regions, and SKUs — not secrets. All sensitive values (passwords, client secrets, object IDs) must be stored as **GitHub Secrets**.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute, local validation steps, and recommended branch protection rules.
+
 ## License
 
-This project is for educational/demo purposes.
+This project is licensed under the [MIT License](LICENSE). It is intended for educational/demo purposes.

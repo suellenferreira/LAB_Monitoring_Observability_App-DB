@@ -1,0 +1,71 @@
+name: Bug Report
+description: Report a deployment error or unexpected behavior
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please include as much detail as possible so we can reproduce the issue.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - GitHub Actions pipeline
+        - Bicep / ARM deployment
+        - App Service (Frontend or Backend)
+        - SQL Database (PaaS)
+        - SQL VM (IaaS)
+        - Grafana
+        - Alerts
+        - Workbook
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the error and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error output
+      description: Paste the relevant error from the GitHub Actions log or Azure Portal.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: deploy-config.cfg (redacted)
+      description: Paste your deploy-config.cfg with any sensitive values removed.
+      render: properties
+    validations:
+      required: false
+
+  - type: input
+    id: region
+    attributes:
+      label: Azure region
+      placeholder: e.g., centralus
+    validations:
+      required: false
+
+  - type: dropdown
+    id: trigger
+    attributes:
+      label: How did you trigger the deployment?
+      options:
+        - Git push to main
+        - Manual workflow dispatch
+        - Local CLI (az deployment group create)
+    validations:
+      required: true
