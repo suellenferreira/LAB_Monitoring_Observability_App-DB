@@ -73,7 +73,8 @@ resource monitoringReaderAssignment 'Microsoft.Authorization/roleAssignments@202
 // -- Role Assignment: Grafana Admin --
 // Grants a user or group Grafana Admin access to the Grafana instance.
 // Without this, users see "No Grafana Role Assigned" and cannot access the UI.
-var grafanaAdminRoleId = '22926164-76b3-42b6-b3d6-c81df6c22f04'
+// Role ID verified via: az role definition list --name "Grafana Admin" --query "[].name" -o tsv
+var grafanaAdminRoleId = '22926164-76b3-42b3-bc55-97df8dab3e41'
 
 resource grafanaAdminAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(grafanaAdminPrincipalId)) {
   name: guid(grafana.id, grafanaAdminRoleId, grafanaAdminPrincipalId)
