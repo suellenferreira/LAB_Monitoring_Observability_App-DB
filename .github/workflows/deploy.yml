@@ -10,7 +10,7 @@ on:
       resourceGroupName:
         description: 'Resource Group name'
         required: true
-        default: 'rg-lab-monitoring-observability2'
+        default: 'rg-lab-monitoring-observability'
         type: string
       location:
         description: 'Azure region to deploy'

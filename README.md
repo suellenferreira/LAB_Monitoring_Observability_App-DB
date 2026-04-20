@@ -76,6 +76,27 @@ az ad sp create-for-rbac \
 
 > **Save the entire JSON output** — you will need it for the `AZURE_CREDENTIALS` secret.
 
+The Service Principal also needs **User Access Administrator** to create role assignments (e.g., Monitoring Reader for Grafana, SQL Entra admin). Assign it at the resource group scope after the first deployment creates the RG, or at the subscription scope:
+
+```bash
+# Get the SP's appId from the JSON output above
+SP_APP_ID="<clientId from JSON output>"
+
+# Option A — Subscription scope (broader, simpler)
+az role assignment create \
+  --assignee "$SP_APP_ID" \
+  --role "User Access Administrator" \
+  --scope /subscriptions/<YOUR_SUBSCRIPTION_ID>
+
+# Option B — Resource Group scope (narrower, more secure — run after RG is created)
+az role assignment create \
+  --assignee "$SP_APP_ID" \
+  --role "User Access Administrator" \
+  --scope /subscriptions/<YOUR_SUBSCRIPTION_ID>/resourceGroups/rg-lab-monitoring-observability
+```
+
+> **Why is this needed?** The deployment creates role assignments for managed identities (e.g., Monitoring Reader for Grafana, Grafana Admin for UI access). Without `User Access Administrator`, the pipeline will fail with `Authorization failed for Microsoft.Authorization/roleAssignments/write`.
+
 The output looks like:
 ```json
 {
@@ -159,7 +180,7 @@ az login --tenant <YOUR_TENANT_ID>
 az account set --subscription <YOUR_SUBSCRIPTION_ID>
 
 # Create resource group
-az group create --name rg-lab-monitoring-observability2 --location centralus
+az group create --name rg-lab-monitoring-observability --location centralus
 
 # Set credentials as environment variables
 export SQL_ENTRA_ADMIN_OBJECT_ID='<YOUR_ENTRA_OBJECT_ID>'
@@ -168,14 +189,14 @@ export VM_ADMIN_PASSWORD='<YOUR_STRONG_PASSWORD>'
 
 # Deploy using the parameters file (uses entraOnly mode by default)
 az deployment group create \
-  --resource-group rg-lab-monitoring-observability2 \
+  --resource-group rg-lab-monitoring-observability \
   --template-file main.bicep \
   --parameters main.bicepparam
 
 # Or deploy with sqlAndEntra mode (SQL + Entra ID authentication)
 export SQL_ADMIN_PASSWORD='<YOUR_STRONG_PASSWORD>'
 az deployment group create \
-  --resource-group rg-lab-monitoring-observability2 \
+  --resource-group rg-lab-monitoring-observability \
   --template-file main.bicep \
   --parameters main.bicepparam \
   --parameters sqlAuthMode=sqlAndEntra
@@ -188,7 +209,7 @@ az deployment group create \
 Delete all resources when the lab is no longer needed:
 
 ```bash
-az group delete --name rg-lab-monitoring-observability2 --yes --no-wait
+az group delete --name rg-lab-monitoring-observability --yes --no-wait
 ```
 
 ## Project Structure
